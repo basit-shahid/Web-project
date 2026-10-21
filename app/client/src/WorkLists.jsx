@@ -21,10 +21,10 @@ export function ProjectList({ projects, openProject }) {
     <div className="list-tools"><div className="search-field"><label htmlFor="project-search">Find a project</label><input id="project-search" ref={searchInput} type="search" placeholder="Project, client or manager" value={query} onChange={e => setQuery(e.target.value)} /></div><div className="select-field"><label htmlFor="project-sort">Order projects</label><select id="project-sort" value={sort} onChange={e => setSort(e.target.value)}><option value="deadline">Deadline · earliest first</option><option value="name">Project name · A–Z</option></select></div></div>
     <Summary shown={visible.length} total={projects.length} noun="projects" filtered={!!query || sort !== 'deadline'} clear={clear}/>
     {visible.length ? <div className="project-ledger"><div className="project-ledger-head" aria-hidden="true"><span>Project / client</span><span>Manager</span><span>Delivery</span><span></span></div>{visible.map(p => <button className="project-card" key={p.id} onClick={() => openProject(p.id)}>
-      <div className="project-identity"><h2>{p.name}</h2><span className="client-name">{p.clientName}</span><p className="project-scope-preview">{p.description || 'Open the project to review scope and assignments.'}</p></div>
+      <div className="project-identity"><span className="project-glyph" aria-hidden="true">{p.name.slice(0,1)}</span><span className="card-eyebrow">CLIENT PROJECT</span><h2>{p.name}</h2><span className="client-name">{p.clientName}</span><p className="project-scope-preview">{p.description || 'Open the project to review scope and assignments.'}</p></div>
       <div className="project-manager"><span className="mobile-label">Project manager</span>{p.managerName || p.managerId}</div>
       <div className="project-delivery"><span className="mobile-label">Delivery deadline</span><time dateTime={p.deadline}>{formatDate(p.deadline)}</time></div>
-      <span className="open-project">Open <span aria-hidden="true">↗</span></span>
+      <span className="open-project">Open <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span>
     </button>)}</div> : <NoResults noun="projects" clear={clear}/>}
   </section>;
 }
