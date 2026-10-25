@@ -1,4 +1,4 @@
-// Static interface-review data only. Never used by login, the API, or transcript conversion.
+// Fictional frontend demo fixtures. No real accounts, provider calls or server persistence.
 export const previewUsers = [
   { id: 'ADMIN', name: 'Admin', role: 'ADMIN', specialization: 'Administrator' },
   { id: 'PM01', name: 'Ayesha Khan', role: 'MANAGER', specialization: 'Web PM' },

@@ -2,17 +2,10 @@
 .env.*
 **/.env
 **/.env.*
-backend/data/**
-backend/*.crt
-backend/*.pem
-backend/*.cer
+backend/**
 hackathon/**
 Aizaz/**
 node_modules/**
 **/node_modules/**
 .git/**
-
-!backend/certs/supabase-root.pem
-
-# Presentation assets are served by GitHub, not the application bundle.
-docs/assets/**
+docs/**

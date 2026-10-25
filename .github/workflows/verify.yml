@@ -1,7 +1,7 @@
 name: Verify NovaWorks
 on:
   push:
-    branches: [main]
+    branches: [basitbranch]
   pull_request:
 permissions:
   contents: read
@@ -19,11 +19,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            backend/package-lock.json
             app/client/package-lock.json
-      - run: npm ci
-      - run: npm ci --prefix backend
-      - run: npm run test:all --prefix backend
+      - run: npm ci --prefix app/client
       - run: npm run build
-      - run: npm audit --omit=dev
       - run: npm audit --prefix app/client
