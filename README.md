@@ -2,7 +2,7 @@
 
 Branch **frontend/vanilla-erp** contains a new standalone version of the latest inspected [Aizaz-Noor/Nova-Works](https://github.com/Aizaz-Noor/Nova-Works) ERP/CRM flow (source revision `dfcb293`, 28 October 2026).
 
-**Open [`vanilla/README.md`](vanilla/README.md) for the walkthrough and screen-by-screen code guide.**
+**The vanilla screens now follow the source layout and styling.** See [`vanilla/SOURCE_ALIGNMENT.md`](vanilla/SOURCE_ALIGNMENT.md) for the screen-by-screen comparison and [`vanilla/README.md`](vanilla/README.md) for the editing guide.
 
 ## Run
 

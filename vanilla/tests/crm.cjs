@@ -1,6 +1,6 @@
-// Optional browser workflow acceptance, not a runtime dependency.
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
-const assert = require("node:assert/strict");
+// Optional source-aligned browser workflow check.
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright"),
+  assert = require("node:assert/strict");
 (async () => {
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
@@ -9,134 +9,122 @@ const assert = require("node:assert/strict");
   });
   try {
     const page = await browser.newPage({
-      viewport: { width: 1440, height: 1000 },
+      viewport: { width: 1440, height: 1100 },
     });
     page.setDefaultTimeout(8000);
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("dialog", (d) => d.accept());
-    await page.goto(process.env.DEMO_URL || "http://127.0.0.1:5173");
+    await page.goto(process.env.DEMO_URL || "http://127.0.0.1:5173/");
     await page.locator("#entry-role").selectOption("u-owner");
-    await page.getByRole("button", { name: /Explore demo workspace/ }).click();
+    await page
+      .getByRole("button", { name: "Explore demo workspace", exact: true })
+      .click();
     await page.locator('#navigation [data-nav="customers"]').click();
+    assert.equal(
+      await page.locator("#view h2").first().innerText(),
+      "Customers",
+    );
+    await page.getByText("Add a customer", { exact: true }).click();
+    let form = page.locator('form[data-form="crm-customer-create"]');
+    await form.locator("[name=name]").fill("Source parity customer");
+    await form.locator("[name=email]").fill("parity@example.test");
+    await form
+      .getByRole("button", { name: "Create customer", exact: true })
+      .click();
+    await page.getByText("Edit customer", { exact: true }).click();
+    form = page.locator('form[data-form="crm-customer-save"]');
+    await form.locator("[name=website]").fill("https://example.test");
+    await form
+      .locator("[name=notes]")
+      .fill("Website and notes persisted through source inline editing.");
+    await form.locator("[name=status]").selectOption("ACTIVE");
+    await form
+      .getByRole("button", { name: "Save customer changes", exact: true })
+      .click();
     await page
-      .getByRole("button", { name: "Add customer", exact: true })
-      .click();
-    let modal = page.locator("#modal");
-    await modal
-      .getByLabel("Company name", { exact: true })
-      .fill("Examiner flow customer");
-    await modal
-      .getByLabel("Email", { exact: true })
-      .fill("examiner@example.test");
-    await modal.getByLabel("Phone", { exact: true }).fill("+1 555 0123");
-    await modal.getByLabel("Industry", { exact: true }).fill("Consulting");
-    await modal.getByLabel("Customer status").selectOption("ACTIVE");
-    await modal
-      .getByRole("button", { name: "Save customer", exact: true })
-      .click();
-    await page
-      .getByRole("button", { name: "Add contact", exact: true })
-      .click();
-    await modal
-      .getByLabel("Contact name", { exact: true })
-      .fill("Demo Contact");
-    await modal
-      .getByLabel("Email", { exact: true })
-      .fill("contact@example.test");
-    await modal.getByLabel("Job title", { exact: true }).fill("Buyer");
-    await modal
+      .getByText("Website: https://example.test", { exact: true })
+      .waitFor();
+    await page.getByText("Add a contact", { exact: true }).click();
+    form = page.locator('form[data-form="crm-contact-save"]');
+    await form.locator("[name=name]").fill("Demo contact");
+    await form.locator("[name=email]").fill("contact@example.test");
+    await form.locator("[name=phone]").fill("0123456");
+    await form.locator("[name=role]").fill("Buyer");
+    await form
       .getByRole("button", { name: "Save contact", exact: true })
       .click();
-    await page.getByText("Demo Contact", { exact: true }).waitFor();
-    await page
-      .getByRole("button", { name: "Log activity", exact: true })
-      .click();
-    await modal
-      .getByLabel("Activity note", { exact: true })
-      .fill("Discussed the project scope and confirmed the next meeting.");
-    await modal
+    await page.getByText("Record an activity", { exact: true }).click();
+    form = page.locator('form[data-form="crm-activity-save"]');
+    await form.locator("[name=note]").fill("Inline source activity");
+    await form
       .getByRole("button", { name: "Save activity", exact: true })
       .click();
-    await page
-      .getByText(
-        "Discussed the project scope and confirmed the next meeting.",
-        { exact: true },
-      )
-      .waitFor();
-    await page.getByRole("button", { name: "New lead", exact: true }).click();
-    await modal
-      .getByLabel("Lead name", { exact: true })
-      .fill("Examiner flow opportunity");
-    await modal.getByLabel("Potential value", { exact: true }).fill("1250.50");
-    await modal.getByLabel("Lead source", { exact: true }).fill("Referral");
-    await modal
+    await page.getByText("Inline source activity", { exact: true }).waitFor();
+    await page.locator('#navigation [data-nav="pipeline"]').click();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Leads", exact: true })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+    await page.getByText("Add a lead", { exact: true }).click();
+    form = page.locator('form[data-form="crm-opportunity-save"]');
+    await form.locator("[name=name]").fill("Source parity lead");
+    await form.locator("[name=companyName]").fill("New conversion company");
+    await form.locator("[name=email]").fill("newbuyer@example.test");
+    await form
+      .locator("[name=notes]")
+      .fill("New custom lead, no customer prerequisite.");
+    await form
       .getByRole("button", { name: "Create lead", exact: true })
       .click();
-    await page
-      .getByRole("button", { name: "Qualify lead", exact: true })
+    await page.getByText("Edit lead", { exact: true }).click();
+    form = page.locator('form[data-form="crm-opportunity-edit"]');
+    await form.locator("[name=status]").selectOption("QUALIFIED");
+    await form
+      .getByRole("button", { name: "Save lead changes", exact: true })
       .click();
     await page
-      .getByRole("button", { name: "Convert to deal", exact: true })
+      .getByRole("button", {
+        name: "Convert lead to customer and deal",
+        exact: true,
+      })
       .click();
-    await page.locator("select[name=stage]").selectOption("WON");
-    await page
-      .getByRole("button", { name: "Update stage", exact: true })
+    await page.getByText("Edit deal", { exact: true }).click();
+    form = page.locator('form[data-form="crm-opportunity-edit"]');
+    await form.locator("[name=value]").fill("1250.50");
+    await form.locator("[name=stage]").selectOption("WON");
+    await form
+      .getByRole("button", { name: "Save deal changes", exact: true })
       .click();
-    await page
+    form = page.locator('form[data-form="crm-project-save"]');
+    await form.locator("[name=deadline]").fill("2026-12-15");
+    await form.locator("[name=managerId]").selectOption("u-manager");
+    await form
       .getByRole("button", { name: "Create delivery project", exact: true })
       .click();
-    await modal.locator("select[name=managerId]").selectOption("u-manager");
-    await modal
-      .getByLabel("Delivery deadline", { exact: true })
-      .fill("2026-12-15");
-    await modal
-      .getByLabel("Agreed scope", { exact: true })
-      .fill("Delivery for examiner flow.");
-    await modal
-      .getByRole("button", { name: "Create delivery project", exact: true })
-      .click();
-    await page
-      .getByText("Delivery for examiner flow.", { exact: true })
-      .waitFor();
-    let ids = await page.evaluate(() => {
-      const c = Nova.data.customers.find(
-        (c) => c.name === "Examiner flow customer",
-      );
-      const d = Nova.data.deals.find(
-        (d) => d.name === "Examiner flow opportunity",
-      );
-      return {
-        customer: c.id,
-        deal: d.id,
-        project: Nova.data.projects.find((p) => p.dealId === d.id).id,
-      };
-    });
-    await page.reload();
-    await page
-      .getByRole("button", { name: "Exit demo", exact: true })
-      .waitFor();
     assert.equal(
       await page.evaluate(
-        (id) => Nova.data.projects.filter((p) => p.dealId === id).length,
-        ids.deal,
+        () =>
+          Nova.data.projects.filter(
+            (p) => p.name === "New conversion company opportunity",
+          ).length,
       ),
       1,
     );
-    await page.evaluate((id) => Nova.go("pipeline", { dealId: id }), ids.deal);
-    await page
-      .getByRole("button", { name: "Open delivery project", exact: true })
-      .waitFor();
-    await page
-      .getByRole("button", { name: "Create quote", exact: true })
-      .click();
-    await page
-      .getByText("Examiner flow opportunity", { exact: false })
-      .first()
-      .waitFor();
+    await page.reload();
+    assert.equal(
+      await page.evaluate(
+        () =>
+          Nova.data.customers.filter((c) => c.name === "New conversion company")
+            .length,
+      ),
+      1,
+    );
     assert.deepEqual(errors, []);
     console.log(
-      "PASS: customer create, contact, activity, lead create/qualify/convert, won deal, project handover, quote cross-link, reload persistence, zero browser JS errors.",
+      "PASS inline source parity: customer create/edit website notes status, contacts phone/job, activity, Leads default, company-only lead creation, qualified lead -> customer/contact/deal, edit deal WON, project handover, persistence, zero browser errors.",
     );
   } finally {
     await browser.close();

@@ -11,196 +11,324 @@
     <title>NovaWorks — Business workspace</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/reference/styles.css" />
+    <link rel="stylesheet" href="css/reference/premium-records.css" />
+    <link rel="stylesheet" href="css/reference/erp-insights.css" />
+    <link rel="stylesheet" href="css/reference/erp-shell.css" />
+    <link rel="stylesheet" href="css/reference/premium-ui.css" />
+    <link rel="stylesheet" href="css/reference/apple-ui.css" />
+    <link rel="stylesheet" href="css/reference/entry.css" />
+    <link rel="stylesheet" href="css/reference/entry-motion.css" />
+    <link rel="stylesheet" href="css/reference/notifications.css" />
+    <link rel="stylesheet" href="css/source-parity.css" />
   </head>
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
-    <section id="entry" class="entry">
-      <header class="entry-header">
+    <section id="entry" class="login-page erp-entry">
+      <header class="login-header">
         <a class="brand" href="index.html"
-          ><span class="brand-mark">N</span
-          ><span>NovaWorks<small>BUSINESS WORKSPACE</small></span></a
-        ><span class="entry-label">HTML · CSS · JavaScript</span>
-      </header>
-      <main class="entry-main">
-        <div class="entry-story">
-          <p class="eyebrow">ONE WORKSPACE. A CLEARER WAY FORWARD.</p>
-          <h1>Company work,<br /><em>clearly connected.</em></h1>
-          <p class="entry-copy">
-            From the first customer conversation to the final invoice. Bring
-            your sales, delivery and finance into one clear flow.
-          </p>
-          <div class="entry-journey" aria-label="Business workflow">
-            <span>Relationships</span><i>→</i><span>Delivery</span><i>→</i
-            ><span>Revenue</span>
-          </div>
-          <div class="entry-art" aria-hidden="true">
-            <div class="art-orbit"></div>
-            <div class="art-card one">
-              <span class="art-tag">CUSTOMER SUCCESS</span
-              ><strong>Good work starts<br />with connection.</strong>
-              <div class="art-line"></div>
-              <div class="art-line short"></div>
-              <span class="art-check">✓</span>
-            </div>
-            <div class="art-card two">
-              <span class="art-tag">FROM PLAN TO PROGRESS</span>
-              <div class="art-row"><span>✓</span> Scope agreed</div>
-              <div class="art-row"><span>✓</span> Team assigned</div>
-              <div class="art-row"><span>↗</span> Moving forward</div>
-            </div>
-          </div>
-        </div>
-        <div class="entry-panel">
-          <span class="mini-label">WELCOME TO NOVAWORKS</span>
-          <h2>See the whole picture.</h2>
-          <p class="muted">
-            Explore a fictional service company with connected customers,
-            projects and financial records.
-          </p>
-          <form data-form="enter">
-            <label class="field"
-              ><span>Choose a demonstration role</span
-              ><select name="userId" id="entry-role">
-                <option value="u-owner">Aizaz Noor · Owner</option>
-                <option value="u-manager">Ayesha Khan · Manager</option>
-                <option value="u-ali">Ali Raza · Team member</option>
-                <option value="u-maryam">Maryam Ahmed · Team member</option>
-              </select></label
-            >
-            <p class="form-error" role="alert"></p>
-            <button type="submit" class="primary full">
-              Explore demo workspace <span aria-hidden="true">→</span>
-            </button>
-          </form>
-          <div class="entry-note">
-            <span class="live-dot"></span>
-            <p>
-              <strong>A complete local demonstration</strong><br />No account,
-              server or installation required. Data stays in this browser. Role
-              selection is simulated—not secure authentication.
-            </p>
-          </div>
-          <div class="entry-preview">
-            <div>
-              <strong>Sales</strong><span>Customer → confirmed order</span>
-            </div>
-            <div>
-              <strong>Delivery</strong
-              ><span>Assigned work → approved time</span>
-            </div>
-            <div>
-              <strong>Finance</strong><span>Invoice → recorded payment</span>
-            </div>
-          </div>
-        </div>
-      </main>
-      <footer class="entry-footer">
-        Designed for service teams. Rebuilt for the fundamentals.<span
-          >Fictional data only · No live AI or payments</span
+          ><span class="brand-symbol">N</span
+          ><span
+            ><strong>NovaWorks</strong><small>Business workspace</small></span
+          ></a
+        ><button
+          type="button"
+          class="erp-signin-shortcut"
+          data-action="focus-signin"
         >
+          Sign in
+        </button>
+      </header>
+      <main class="login-main erp-entry-main">
+        <section class="login-context erp-entry-context">
+          <p class="login-eyebrow">NovaWorks business workspace</p>
+          <h1>Company work, clearly connected.</h1>
+          <p>
+            Keep customer relationships, project delivery and invoicing moving
+            together in one workspace.
+          </p>
+          <section class="demo-accounts local-demo-access">
+            <div>
+              <p class="login-eyebrow">A guided workspace</p>
+              <h2>Explore demo workspace</h2>
+              <p>Fictional company · saved locally</p>
+              <span class="local-demo-company" id="entry-company"
+                >NovaWorks Service Studio</span
+              >
+            </div>
+            <form data-form="enter">
+              <label class="field demo-role-choice"
+                ><span>Demo role</span
+                ><select name="userId" id="entry-role">
+                  <option value="u-owner">Owner</option>
+                  <option value="u-manager">Manager</option>
+                  <option value="u-ali">Team member · Ali</option>
+                  <option value="u-maryam">Team member · Maryam</option>
+                </select></label
+              >
+              <p class="form-error" role="alert"></p>
+              <button type="submit" class="primary full">
+                Explore demo workspace
+              </button>
+            </form>
+          </section>
+        </section>
+        <figure class="source-entry-visual entry-motion">
+          <img
+            src="assets/novaworks-flow-poster.webp"
+            width="1536"
+            height="864"
+            alt="Connected customer, project and invoice workflow"
+          />
+          <video
+            id="entry-motion-video"
+            class="source-entry-video"
+            muted
+            playsinline
+            loop
+            preload="none"
+            poster="assets/novaworks-flow-poster.webp"
+            aria-hidden="true"
+            tabindex="-1"
+          ></video>
+          <button
+            type="button"
+            class="source-motion-control"
+            data-action="source-toggle-motion"
+            aria-pressed="false"
+          >
+            Play animation
+          </button>
+          <figcaption>
+            <span>One connected workflow</span
+            ><strong>Customer — Project — Invoice</strong>
+          </figcaption>
+        </figure>
+        <section class="login-form erp-login-form">
+          <div class="erp-login-heading">
+            <p class="login-eyebrow">NovaWorks ERP</p>
+            <h2>Sign in</h2>
+          </div>
+          <p class="muted">Access your company workspace.</p>
+          <form data-form="local-signin">
+            <div class="erp-credential-group">
+              <label for="email">Email address</label
+              ><input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@company.com"
+                autocomplete="off"
+                required
+              /><label for="password">Password</label
+              ><input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="off"
+                required
+              />
+            </div>
+            <p class="form-error" role="alert"></p>
+            <button class="primary full">Sign in</button>
+          </form>
+          <button type="button" class="secondary" data-action="local-account">
+            Create ERP account
+          </button>
+          <p class="source-demo-note">
+            Frontend demonstration only. Use Explore demo workspace, or a sample
+            team email with Demo123!. No real account authentication.
+          </p>
+        </section>
+      </main>
+      <footer class="login-footer">
+        NovaWorks ERP · Company work, clearly connected.
       </footer>
     </section>
     <div id="workspace" hidden>
-      <header class="topbar">
-        <div class="topbar-left">
-          <button
-            id="menu-button"
-            class="icon-button menu-button"
-            data-action="menu"
-            aria-label="Open company menu"
-            aria-controls="sidebar"
-            aria-expanded="false"
-          >
-            ☰</button
-          ><a class="brand" href="#overview" data-nav="overview"
-            ><span class="brand-mark">N</span
-            ><span>NovaWorks<small>BUSINESS WORKSPACE</small></span></a
-          >
-        </div>
-        <div class="topbar-tools">
-          <button
-            class="icon-button notification-button"
-            data-action="notifications"
-            aria-label="Open notifications"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-              aria-hidden="true"
+      <header class="app-header erp-app-header topbar">
+        <div class="header-inner">
+          <div class="header-identity">
+            <a class="brand" href="#overview" data-nav="overview"
+              ><span class="brand-symbol">N</span
+              ><span
+                ><strong>NovaWorks</strong
+                ><small>Meeting to Execution</small></span
+              ></a
             >
-              <path
-                d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
-              /></svg
-            ><span
-              id="notification-count"
-              class="notification-count"
-            ></span></button
-          ><span class="top-divider"></span
-          ><span class="avatar" id="user-avatar">AN</span>
-          <div class="user-label">
-            <strong id="user-name"></strong><span id="user-role"></span>
           </div>
-          <button class="text-button" data-action="logout">Exit demo</button>
+          <div class="account topbar-tools">
+            <div class="user-label">
+              <strong id="user-name"></strong><span>Company member</span
+              ><span id="user-role" hidden></span>
+            </div>
+            <span class="avatar" id="user-avatar" hidden></span
+            ><button class="quiet" data-action="logout">Sign out</button>
+          </div>
         </div>
       </header>
-      <div class="demo-strip">
-        <span
-          ><strong>Frontend demonstration</strong> · Local browser data. No
-          server, secure login, live AI or money transfers.</span
-        ><button class="text-button" data-action="show-guide">
-          Workflow guide
-        </button>
-      </div>
-      <div class="workspace-layout">
-        <aside id="sidebar" class="sidebar">
-          <div class="company-card">
-            <span class="company-icon">NW</span>
-            <div>
-              <strong id="company-name"></strong
-              ><span>Service company · Demo</span>
+      <div class="erp-shell source-workspace" id="company-workspace">
+        <section class="erp-operating-workspace">
+          <header class="erp-commandbar">
+            <div class="erp-context-label">
+              <span>Company workspace</span><strong id="company-name"></strong>
             </div>
+            <div class="erp-company-picker">
+              <label for="company-picker">Current company</label
+              ><select id="company-picker" aria-label="Current company"></select
+              ><span id="company-role" class="erp-role-chip">Owner</span>
+            </div>
+          </header>
+          <div class="erp-utility-tray">
+            <details class="erp-account-tools">
+              <summary>Company tools</summary>
+              <div class="erp-account-tools-content">
+                <p class="muted">
+                  Browser-local company workspace. No server or shared company
+                  access.
+                </p>
+                <details class="transcript-panel">
+                  <summary>Create a company</summary>
+                  <form data-form="local-company">
+                    <p class="form-error" role="alert"></p>
+                    <label class="field"
+                      ><span>Company name</span
+                      ><input name="name" required maxlength="160" /></label
+                    ><button class="primary">Create company</button>
+                  </form>
+                </details>
+                <details class="transcript-panel">
+                  <summary>Accept a company invitation</summary>
+                  <p class="muted">
+                    Company invitations require the original backend. In this
+                    local demo, use Settings to switch between demonstration
+                    roles.
+                  </p>
+                  <button class="secondary" data-nav="settings">
+                    Open company settings
+                  </button>
+                </details>
+              </div>
+            </details>
+            <details class="erp-account-tools">
+              <summary>Account security</summary>
+              <div class="erp-account-tools-content">
+                <p class="muted">
+                  Frontend demonstration only. Password storage, authenticator
+                  setup and recovery require the original backend.
+                </p>
+                <section class="source-security-section">
+                  <h3>Change password</h3>
+                  <fieldset disabled>
+                    <label class="field"
+                      ><span>Current password</span
+                      ><input type="password" autocomplete="off" /></label
+                    ><label class="field"
+                      ><span>New password</span
+                      ><input type="password" autocomplete="off" /></label
+                    ><label class="field"
+                      ><span>Confirm new password</span
+                      ><input type="password" autocomplete="off" /></label
+                    ><button class="secondary">
+                      Change password (backend required)
+                    </button>
+                  </fieldset>
+                </section>
+                <section class="source-security-section">
+                  <h3>Two-factor authentication</h3>
+                  <p class="muted">
+                    Authenticator and recovery codes are not configured in this
+                    browser-only version.
+                  </p>
+                  <button class="secondary" disabled>
+                    Set up authenticator
+                  </button>
+                </section>
+                <section class="source-security-section">
+                  <h3>Security history</h3>
+                  <p class="muted">
+                    No authenticated account history is available. Local role
+                    selection is not a security event.
+                  </p>
+                  <button class="secondary" data-action="show-local-roles">
+                    Choose a demo role
+                  </button>
+                </section>
+              </div>
+            </details>
+            <details class="erp-account-tools" id="source-notifications">
+              <summary data-action="notifications">
+                ＋ Notifications
+                <span
+                  id="notification-count"
+                  class="source-unread-count"
+                ></span>
+              </summary>
+              <div
+                class="erp-account-tools-content"
+                id="source-notifications-content"
+              ></div>
+            </details>
           </div>
-          <nav id="navigation" aria-label="Company navigation"></nav>
-          <div class="sidebar-bottom">
-            <div class="small-label">YOUR WORK, CONNECTED</div>
-            <p>A clearer path from<br />conversation to completion.</p>
-            <button class="text-button" data-action="reset">
-              Reset sample workspace
+          <p class="source-local-notice">
+            Frontend demonstration · Browser-local data; no secure login, live
+            AI, email or payments.
+            <button class="text-button" data-action="show-guide">
+              Workflow guide
             </button>
+          </p>
+          <div class="workspace-layout erp-company-layout">
+            <aside id="sidebar" class="sidebar company-module-navigation">
+              <button
+                id="menu-button"
+                type="button"
+                class="erp-module-menu-trigger"
+                data-action="menu"
+                aria-label="Company menu"
+                aria-controls="navigation"
+                aria-expanded="false"
+              >
+                Company menu
+              </button>
+              <nav
+                id="navigation"
+                class="erp-module-list"
+                aria-label="Company modules"
+              ></nav>
+              <div class="sidebar-bottom">
+                <button class="text-button" data-action="reset">
+                  Reset sample workspace
+                </button>
+              </div>
+            </aside>
+            <main id="content" class="content erp-module-content" tabindex="-1">
+              <div id="storage-warning" class="notice error" hidden></div>
+              <div class="page-head source-global-heading">
+                <div>
+                  <p class="eyebrow" id="breadcrumb">Company / Overview</p>
+                  <h1 id="page-title" tabindex="-1">Company overview</h1>
+                  <p id="page-description" class="muted"></p>
+                </div>
+                <span id="today-label" hidden></span>
+              </div>
+              <div id="view"></div>
+            </main>
           </div>
-        </aside>
-        <main id="content" class="content" tabindex="-1">
-          <div id="storage-warning" class="banner warning" hidden></div>
-          <div class="page-head">
-            <div>
-              <p class="eyebrow" id="breadcrumb">COMPANY / OVERVIEW</p>
-              <h1 id="page-title" tabindex="-1">Company overview</h1>
-              <p id="page-description" class="muted"></p>
-            </div>
-            <div class="page-head-meta">
-              <span class="live-dot"></span> Local workspace
-              <span id="today-label"></span>
-            </div>
-          </div>
-          <div id="view"></div>
           <footer class="workspace-footer">
-            <span>NovaWorks · Business workspace</span
-            ><span>Plain HTML, CSS & JavaScript</span>
+            <span>NovaWorks Technologies</span><span>Meeting to Execution</span>
           </footer>
-        </main>
+        </section>
       </div>
     </div>
     <dialog id="modal" aria-labelledby="dialog-title"></dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     <script src="js/data.js"></script>
     <script src="js/core.js"></script>
+    <script src="js/source-helpers.js"></script>
     <script src="js/crm.js"></script>
     <script src="js/finance.js"></script>
     <script src="js/delivery.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/source-parity.js"></script>
   </body>
 </html>

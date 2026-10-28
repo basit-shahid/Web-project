@@ -1,4 +1,4 @@
-// Optional browser workflow acceptance, not a runtime dependency.
+// Optional source-aligned browser workflow check.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 const assert = require("node:assert/strict");
 (async () => {
@@ -17,18 +17,35 @@ const assert = require("node:assert/strict");
     await page.locator('form[data-form="enter"] button').click();
     await page.evaluate(() => Nova.go("quotes", { dealId: "deal-2" }));
     await page.locator('[data-action="fin-new-quote"]').first().click();
-    await page.locator('#modal [name="title"]').fill("Northstar QA quote");
-    await page.locator('#modal [name="description"]').fill("Design sprint");
-    await page.locator('#modal [name="quantity"]').fill("2");
-    await page.locator('#modal [name="price"]').fill("100.25");
-    await page.locator('#modal [name="tax"]').fill("5");
-    await page.locator('#modal [data-action="fin-add-line"]').click();
     await page
-      .locator('#modal [name="description"]')
+      .locator('form[data-form="fin-save-quote"] [name="title"]')
+      .fill("Northstar QA quote");
+    await page
+      .locator('form[data-form="fin-save-quote"] [name="description"]')
+      .fill("Design sprint");
+    await page
+      .locator('form[data-form="fin-save-quote"] [name="quantity"]')
+      .fill("2");
+    await page
+      .locator('form[data-form="fin-save-quote"] [name="price"]')
+      .fill("100.25");
+    await page
+      .locator('form[data-form="fin-save-quote"] [name="tax"]')
+      .fill("5");
+    await page
+      .locator('form[data-form="fin-save-quote"] [data-action="fin-add-line"]')
+      .click();
+    await page
+      .locator('form[data-form="fin-save-quote"] [name="description"]')
       .nth(1)
       .fill("Second line");
-    await page.locator('#modal [name="price"]').nth(1).fill("10");
-    await page.locator('#modal button[type="submit"]').click();
+    await page
+      .locator('form[data-form="fin-save-quote"] [name="price"]')
+      .nth(1)
+      .fill("10");
+    await page
+      .locator('form[data-form="fin-save-quote"] button[type="submit"]')
+      .click();
     await page.locator('[data-action="fin-issue-quote"]').click();
     await page.locator('[data-action="fin-accept-quote"]').click();
     await page
@@ -73,6 +90,8 @@ const assert = require("node:assert/strict");
       2,
     );
     await page.evaluate(() => Nova.go("invoices"));
+    await page.locator('[data-action="fin-new-invoice"]').click();
+    await page.locator('[data-action="fin-source"][data-id="time"]').click();
     await page.locator('[data-action="fin-time-compose"]').click();
     await page.locator('#modal [name="projectId"]').selectOption("project-1");
     await page.locator('#modal [name="currency"]').selectOption("USD");
@@ -87,6 +106,8 @@ const assert = require("node:assert/strict");
       135,
     );
     await page.evaluate(() => Nova.go("invoices"));
+    await page.locator('[data-action="fin-new-invoice"]').click();
+    await page.locator('[data-action="fin-source"][data-id="time"]').click();
     await page.locator('[data-action="fin-time-compose"]').click();
     await page.locator('#modal [name="projectId"]').selectOption("project-1");
     await page.locator('#modal button[type="submit"]').click();

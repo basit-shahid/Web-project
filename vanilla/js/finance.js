@@ -71,100 +71,15 @@
   N.actions["fin-invoice-order"] = (el) =>
     N.go("invoices", { orderId: el.dataset.id });
 
-  N.views.quotes = function () {
-    if (!N.canManage())
-      return N.empty(
-        "Sales records are unavailable",
-        "Choose an owner or manager demo role to explore quotes and sales orders.",
-      );
-    const quote = find("quotes", N.params.quoteId);
-    const order = find("orders", N.params.orderId);
-    if (quote) return quoteDetail(quote);
-    if (order) return orderDetail(order);
-    const tab = N.params.tab === "orders" ? "orders" : "quotes";
-    const deal = find("deals", N.params.dealId);
-    const rows = N.data[tab];
-    return `<div class="page-head"><div><p class="eyebrow">SALES / AGREED WORK</p><h1>Quotes & sales orders</h1><p class="muted">Agree the scope and price, record approval, then preserve those terms in a sales order.</p></div>${tab === "quotes" ? button("New quote", "fin-new-quote", deal?.id || "", "primary") : ""}</div>
-      ${deal ? `<div class="banner">Preparing a quote for <strong>${E(deal.name)}</strong> · ${E(N.customerName(deal.customerId))}. ${button("Create quote from this deal", "fin-new-quote", deal.id)}</div>` : ""}
-      ${salesTabs(tab)}<div class="toolbar"><label class="search">Search ${tab === "orders" ? "sales orders" : "quotes"}<input type="search" data-fin-filter="${tab}" placeholder="Title or customer"></label></div>
-      <div id="fin-sales-list">${salesRows(tab, rows)}</div><p class="hint">Acceptance is a locally recorded demonstration. This version does not send quotes or provide a customer approval portal.</p>`;
-  };
-  function salesRows(kind, rows) {
-    if (!rows.length)
-      return N.empty(
-        kind === "orders" ? "No sales orders yet" : "No quotes yet",
-        kind === "orders"
-          ? "Accept a quote and convert it to a sales order."
-          : "Create a quote directly or start from a deal in Pipeline.",
-      );
-    return listTable(
-      ["Record", "Customer", "Status", "Total", ""],
-      rows.map((row) => [
-        E(row.title),
-        E(N.customerName(row.customerId)),
-        N.badge(row.status),
-        N.money(kind === "quotes" ? total(row.items) : row.total, row.currency),
-        button(
-          "Open " + (kind === "quotes" ? "quote" : "order"),
-          kind === "quotes" ? "fin-open-quote" : "fin-open-order",
-          row.id,
-        ),
-      ]),
-    );
-  }
-  function quoteDetail(q) {
-    const order = N.data.orders.find((row) => row.quoteId === q.id);
-    return `<div class="page-head"><div>${button("← All quotes", "fin-back-quotes", "", "text-button")}<p class="eyebrow">SALES / QUOTE</p><h1>${E(q.title)}</h1><p class="muted">${E(N.customerName(q.customerId))} · ${E(q.currency)}</p></div>${N.badge(q.status)}</div>
-      <div class="panel"><div class="section-head"><h2>Quoted scope</h2><strong>${N.money(total(q.items), q.currency)}</strong></div>${lineTable(q.items, q.currency)}<div class="detail-grid"><div><h3>Terms</h3><p>${E(q.terms || "No additional terms.")}</p></div><div><h3>Valid until</h3><p>${q.validUntil ? N.date(q.validUntil) : "No expiry set"}</p>${q.dealId ? `<p>Linked opportunity: ${E(find("deals", q.dealId)?.name || "Saved deal")}</p>` : ""}</div></div></div>
-      ${q.acceptedAt ? `<div class="panel"><h2>Recorded customer response</h2><p>${N.date(q.acceptedAt)} · ${E(q.acceptanceNote)}</p><p class="hint">Evidence entered for the demonstration; no external approval was requested.</p></div>` : ""}
-      <div class="actions">${q.status === "DRAFT" ? button("Edit draft", "fin-edit-quote", q.id) + button("Issue quote", "fin-issue-quote", q.id, "primary") : ""}${q.status === "SENT" ? button("Record acceptance", "fin-accept-quote", q.id, "primary") + button("Record decline", "fin-decline-quote", q.id) : ""}${q.status === "ACCEPTED" ? (order ? button("Open sales order", "fin-open-order", order.id, "primary") : button("Create sales order", "fin-convert-order", q.id, "primary")) : ""}</div><p class="hint">Issuing locks the quoted terms. Repeated conversion reopens the same order.</p>`;
-  }
-  function orderDetail(order) {
-    const quote = find("quotes", order.quoteId);
-    const invoice = N.data.invoices.find(
-      (row) => row.orderId === order.id && row.status !== "VOID",
-    );
-    return `<div class="page-head"><div>${button("← Sales orders", "fin-back-orders", "", "text-button")}<p class="eyebrow">SALES / ORDER</p><h1>${E(order.title)}</h1><p class="muted">${E(N.customerName(order.customerId))} · ${N.date(order.date)}</p></div>${N.badge(order.status)}</div><div class="panel"><div class="section-head"><h2>Preserved order terms</h2><strong>${N.money(order.total, order.currency)}</strong></div>${quote ? lineTable(quote.items, order.currency) : "<p>Saved order total.</p>"}<p>${E(quote?.terms || "")}</p></div><div class="actions">${quote ? button("Open accepted quote", "fin-open-quote", quote.id) : ""}${N.isOwner() ? (invoice ? button("Open linked invoice", "fin-open-invoice", invoice.id, "primary") : button("Create invoice from order", "fin-invoice-order", order.id, "primary")) : ""}</div>`;
-  }
   function lineEditor(
     item = { description: "", quantity: 1, price: "", tax: 0 },
   ) {
-    return `<fieldset class="quote-line"><legend>Line item</legend><div class="form-grid">${N.field("Description", "description", item.description, "text", 'required maxlength="300"')}${N.field("Quantity", "quantity", item.quantity, "number", 'required min="1" max="1000000" step="1"')}${N.field("Unit price", "price", item.price, "number", 'required min="0.01" max="1000000000" step="0.01"')}${N.field("Tax %", "tax", item.tax, "number", 'required min="0" max="100" step="0.01"')}</div>${button("Remove line", "fin-remove-line", "", "text-button")}</fieldset>`;
-  }
-  function quoteForm(id, dealId) {
-    if (!guarded(true)) return;
-    const quote = find("quotes", id),
-      deal = find("deals", dealId || quote?.dealId);
-    if (quote && quote.status !== "DRAFT")
-      return N.notify("Issued quote terms cannot be edited.", "error");
-    if (!N.data.customers.length)
-      return N.notify("Create a customer before creating a quote.", "error");
-    N.modal(
-      quote ? "Edit draft quote" : "New quote",
-      `<form data-form="fin-save-quote"><input type="hidden" name="id" value="${E(id || "")}"><input type="hidden" name="dealId" value="${E(deal?.id || "")}"><p class="form-error" role="alert"></p><div class="form-grid">${N.field("Quote title", "title", quote?.title || (deal ? deal.name + " quote" : ""), "text", 'required maxlength="160"')}${N.select(
-        "Customer",
-        "customerId",
-        N.data.customers
-          .filter((c) => c.status !== "ARCHIVED")
-          .map((c) => [c.id, c.name]),
-        quote?.customerId || deal?.customerId || "",
-        "required",
-      )}${N.select(
-        "Currency",
-        "currency",
-        [
-          ["USD", "USD"],
-          ["PKR", "PKR"],
-          ["EUR", "EUR"],
-          ["GBP", "GBP"],
-        ],
-        quote?.currency || deal?.currency || N.data.company.currency || "USD",
-        "required",
-      )}${N.field("Valid until", "validUntil", quote?.validUntil || "", "date")}</div><div id="fin-lines">${(quote?.items || [{}]).map(lineEditor).join("")}</div><div class="actions">${button("Add line item", "fin-add-line")}</div>${N.textarea("Terms", "terms", quote?.terms || "Payment due within 14 days of invoice.", 'maxlength="2000"')}<p class="hint">Prices and tax are calculated in integer cents. Issuing a quote locks these terms.</p><button class="primary" type="submit">Save draft quote</button></form>`,
+    item = Object.assign(
+      { description: "", quantity: 1, price: "", tax: 0 },
+      item,
     );
+    return `<fieldset class="quote-line"><legend>Item</legend><div class="form-grid">${N.field("Item description", "description", item.description, "text", 'required maxlength="300"')}${N.field("Quantity", "quantity", item.quantity, "number", 'required min="1" max="1000000" step="1"')}${N.field("Unit price", "price", item.price, "number", 'required min="0.01" max="1000000000" step="0.01"')}${N.field("Tax percent", "tax", item.tax, "number", 'required min="0" max="100" step="0.01"')}</div>${button("Remove item", "fin-remove-line", "", "text-button")}</fieldset>`;
   }
-  N.actions["fin-new-quote"] = (el) => quoteForm("", el.dataset.id);
-  N.actions["fin-edit-quote"] = (el) => quoteForm(el.dataset.id);
   N.actions["fin-add-line"] = () => {
     const holder = document.getElementById("fin-lines");
     if (holder.children.length >= 20)
@@ -341,92 +256,54 @@
           rate.effectiveFrom <= entry.date,
       )
       .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
-  N.views.invoices = function () {
-    if (!N.isOwner())
-      return N.empty(
-        "Invoices require the owner role",
-        "Managers can explore sales and delivery; financial records are shown to the owner.",
-      );
-    const invoice = find("invoices", N.params.invoiceId);
-    if (invoice) return invoiceDetail(invoice);
-    const order = find("orders", N.params.orderId);
-    const outstanding = N.data.invoices
-      .filter((i) => ["ISSUED", "PAID"].includes(i.status))
-      .reduce((sum, i) => {
-        const key = i.currency;
-        sum[key] =
-          (sum[key] || 0) +
-          Math.max(0, Math.round((i.total - paid(i)) * 100)) / 100;
-        return sum;
-      }, {});
-    return `<div class="page-head"><div><p class="eyebrow">FINANCE / BILLING</p><h1>Invoices</h1><p class="muted">Turn confirmed orders or independently approved time into an invoice, then record receipts.</p></div><div class="actions">${button("From sales order", "fin-order-compose")}${button("Invoice approved time", "fin-time-compose", "", "primary")}</div></div>
-      ${order ? `<div class="banner">Sales order: <strong>${E(order.title)}</strong> · ${N.money(order.total, order.currency)} ${button("Create invoice for this order", "fin-create-order-invoice", order.id, "primary")}</div>` : ""}
-      <div class="stats">${
-        Object.entries(outstanding)
-          .map(
-            ([currency, amount]) =>
-              `<article class="stat"><span>Outstanding · ${E(currency)}</span><strong>${N.money(amount, currency)}</strong></article>`,
-          )
-          .join("") ||
-        '<article class="stat"><span>Invoice records</span><strong>0</strong></article>'
-      }<article class="stat"><span>Draft invoices</span><strong>${N.data.invoices.filter((i) => i.status === "DRAFT").length}</strong></article></div>
-      <div class="toolbar"><label class="search">Find invoices<input type="search" data-fin-filter="invoices" placeholder="Number or customer"></label></div><div id="fin-invoice-list">${invoiceRows(N.data.invoices)}</div><p class="hint">Payment entries are evidence of external receipts. This browser demo never charges cards, transfers funds or sends invoices.</p>`;
-  };
-  function invoiceRows(rows) {
-    if (!rows.length)
-      return N.empty(
-        "No invoices yet",
-        "Create an invoice from a confirmed order or approved billable time.",
-      );
-    return listTable(
-      ["Invoice", "Customer", "Source", "Status", "Total", "Balance", ""],
-      rows.map((row) => [
-        E(row.number),
-        E(N.customerName(row.customerId)),
-        E(row.type === "TIME" ? "Approved time" : "Sales order"),
-        N.badge(row.status),
-        N.money(row.total, row.currency),
-        N.money(
-          ["CREDITED", "VOID"].includes(row.status)
-            ? 0
-            : Math.max(0, row.total - paid(row)),
-          row.currency,
-        ),
-        button("Open invoice", "fin-open-invoice", row.id),
-      ]),
-    );
+  function snapshotInvoiceBilling(invoice) {
+    const company = N.data.company,
+      customer = find("customers", invoice.customerId),
+      quote = find("quotes", find("orders", invoice.orderId)?.quoteId);
+    const defaults = {
+      issuerName: company.legalName || company.name,
+      issuerAddress: company.address || "",
+      customerName: customer?.name || "Unlinked customer",
+      customerEmail: customer?.email || "",
+      customerAddress: customer?.billingAddress || customer?.address || "",
+      terms: quote?.terms || "",
+      paymentInstructions: company.paymentInstructions || "",
+    };
+    Object.keys(defaults).forEach((key) => {
+      if (invoice[key] === undefined) invoice[key] = defaults[key];
+    });
+    return invoice;
   }
-  function invoiceDetail(invoice) {
-    const quote = find("quotes", find("orders", invoice.orderId)?.quoteId);
-    return `<div class="page-head"><div>${button("← All invoices", "fin-back-invoices", "", "text-button")}<p class="eyebrow">FINANCE / INVOICE</p><h1>${E(invoice.number)}</h1><p class="muted">${E(N.customerName(invoice.customerId))} · ${invoice.type === "TIME" ? "Approved time" : "Sales order"}</p></div>${N.badge(invoice.status)}</div>
-      <section class="panel printable-invoice" id="printable-invoice"><div class="section-head"><div><h2>${E(N.data.company.name)}</h2><p class="muted">${E(N.data.company.address || "")}</p></div><div><strong>${E(invoice.number)}</strong><p>Due ${N.date(invoice.dueDate)}</p></div></div><p><strong>Bill to:</strong> ${E(N.customerName(invoice.customerId))}</p>${lineTable(invoice.items, invoice.currency)}<div class="section-head"><span>Invoice total</span><strong>${N.money(invoice.total, invoice.currency)}</strong></div><p>Recorded receipts: ${N.money(paid(invoice), invoice.currency)}</p><p><strong>Outstanding: ${N.money(["CREDITED", "VOID"].includes(invoice.status) ? 0 : Math.max(0, invoice.total - paid(invoice)), invoice.currency)}</strong></p>${quote ? `<p class="muted">${E(quote.terms)}</p>` : ""}<p class="hint">Fictional demonstration invoice. Not a tax-compliant accounting document.</p></section>
-      ${invoice.creditReason ? `<div class="banner"><strong>Full credit recorded:</strong> ${E(invoice.creditReason)}. Original receipts are preserved; no refund was made.</div>` : ""}
-      <div class="actions">${invoice.status === "DRAFT" ? button("Issue invoice", "fin-issue-invoice", invoice.id, "primary") + button("Void draft", "fin-void-invoice", invoice.id) : ""}${invoice.status === "ISSUED" ? button("Record external receipt", "fin-payment", invoice.id, "primary") : ""}${["ISSUED", "PAID"].includes(invoice.status) ? button("Record full credit", "fin-credit", invoice.id) : ""}${button("Print / save PDF", "fin-print", invoice.id)}${invoice.orderId ? button("Open source order", "fin-open-order", invoice.orderId) : ""}</div>
-      <section class="panel"><h2>Receipt history</h2>${
-        invoice.payments?.length
-          ? listTable(
-              ["Date", "Reference", "Amount"],
-              invoice.payments.map((row) => [
-                N.date(row.date),
-                E(row.reference),
-                N.money(row.amount, invoice.currency),
-              ]),
-            )
-          : '<p class="muted">No external receipts recorded.</p>'
-      }</section>`;
+  function invoiceBillingView(invoice) {
+    if (invoice.status === "DRAFT")
+      return snapshotInvoiceBilling({ ...invoice });
+    // Older seeded invoices have no issuer snapshot. Never invent one from changed settings.
+    return {
+      ...invoice,
+      issuerName:
+        invoice.issuerName ?? "Issuer not recorded on this legacy demo invoice",
+      issuerAddress: invoice.issuerAddress ?? "",
+      customerName: invoice.customerName ?? N.customerName(invoice.customerId),
+      customerEmail: invoice.customerEmail ?? "",
+      customerAddress: invoice.customerAddress ?? "",
+      terms: invoice.terms ?? "",
+      paymentInstructions: invoice.paymentInstructions ?? "",
+    };
   }
   function newInvoice(fields) {
     const number = "INV-" + String(N.data.invoices.length + 1).padStart(4, "0");
-    return Object.assign(
-      {
-        id: N.id("invoice"),
-        number,
-        status: "DRAFT",
-        dueDate: dateAfter(14),
-        payments: [],
-        timeIds: [],
-      },
-      fields,
+    return snapshotInvoiceBilling(
+      Object.assign(
+        {
+          id: N.id("invoice"),
+          number,
+          status: "DRAFT",
+          dueDate: dateAfter(14),
+          payments: [],
+          timeIds: [],
+        },
+        fields,
+      ),
     );
   }
   function dateAfter(days) {
@@ -612,6 +489,7 @@
     if (!guarded(false)) return;
     const invoice = find("invoices", el.dataset.id);
     if (!invoice || invoice.status !== "DRAFT") return;
+    snapshotInvoiceBilling(invoice);
     invoice.status = "ISSUED";
     invoice.issuedAt = N.today();
     N.save("Invoice issued locally. No email or payment request was sent.");
@@ -714,23 +592,324 @@
     window.print();
     document.body.classList.remove("printing-invoice");
   };
-  document.addEventListener("input", (event) => {
-    const input = event.target.closest("[data-fin-filter]");
-    if (!input) return;
-    const kind = input.dataset.finFilter,
-      q = input.value.trim().toLowerCase();
-    const rows = N.data[kind].filter((row) =>
-      [row.title, row.number, N.customerName(row.customerId)].some((value) =>
-        String(value || "")
-          .toLowerCase()
-          .includes(q),
-      ),
+  /* Source-aligned screen layout. Business transitions above remain unchanged. */
+  const sourceFilters = {
+    quotes: { q: "", status: "" },
+    orders: { q: "", status: "" },
+    invoices: { q: "", status: "" },
+  };
+  const sourceLabel = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/_/g, " ")
+      .replace(/^./, (c) => c.toUpperCase());
+  const sourceQuoteLabel = (value) =>
+    value === "SENT" ? "Issued" : sourceLabel(value);
+  const sourceHead = (title, description) =>
+    `<div class="page-head section-heading"><div><h2>${E(title)}</h2><p class="muted">${E(description)}</p></div></div>`;
+  const sourceStatus = (invoice) =>
+    `${["PAID", "CREDITED"].includes(invoice.status) ? "Issued" : sourceLabel(invoice.status)} · ${invoice.status === "CREDITED" ? "Credited" : paid(invoice) >= invoice.total ? "Paid" : paid(invoice) > 0 ? "Part paid" : "Unpaid"}`;
+  N.viewFilters = N.viewFilters || {};
+  N.viewFilters.invoices = {
+    get: () => ({ ...sourceFilters.invoices }),
+    apply: (prefs) => {
+      sourceFilters.invoices = {
+        q: String(prefs.q || ""),
+        status: String(prefs.status || ""),
+      };
+      N.render();
+    },
+  };
+  function sourceSearch(kind) {
+    const state = sourceFilters[kind],
+      isQuote = kind === "quotes",
+      isInvoice = kind === "invoices";
+    return `<form class="list-tools toolbar" data-form="fin-source-search"><input type="hidden" name="kind" value="${kind}"><label class="field search"><span>Find ${kind === "orders" ? "sales orders" : kind}</span><input type="search" name="q" maxlength="200" value="${E(state.q)}"></label>${
+      isQuote
+        ? N.select(
+            "Quote status",
+            "status",
+            [
+              ["", "All statuses"],
+              ["DRAFT", "Draft"],
+              ["SENT", "Issued"],
+              ["ACCEPTED", "Accepted"],
+              ["DECLINED", "Declined"],
+              ["SUPERSEDED", "Superseded"],
+            ],
+            state.status,
+          )
+        : isInvoice
+          ? N.select(
+              "Invoice status",
+              "status",
+              [
+                ["", "All statuses"],
+                ["DRAFT", "Draft"],
+                ["ISSUED", "Issued"],
+              ],
+              state.status,
+            )
+          : ""
+    }<button type="submit" class="secondary">Search</button></form>`;
+  }
+  N.forms["fin-source-search"] = (form, fd) => {
+    const kind = fd.get("kind");
+    if (sourceFilters[kind]) {
+      sourceFilters[kind] = {
+        q: String(fd.get("q") || "").trim(),
+        status: String(fd.get("status") || ""),
+      };
+      N.render();
+    }
+  };
+  function sourceRows(kind) {
+    const state = sourceFilters[kind];
+    return N.data[kind].filter(
+      (row) =>
+        (!state.status ||
+          (kind === "invoices" && state.status === "ISSUED"
+            ? ["ISSUED", "PAID", "CREDITED"].includes(row.status)
+            : row.status === state.status)) &&
+        (!state.q ||
+          [row.title, row.number, N.customerName(row.customerId)].some(
+            (value) =>
+              String(value || "")
+                .toLowerCase()
+                .includes(state.q.toLowerCase()),
+          )),
     );
-    const target = document.getElementById(
-      kind === "invoices" ? "fin-invoice-list" : "fin-sales-list",
+  }
+  function sourceQuoteRows(kind, rows) {
+    if (!rows.length)
+      return N.empty(
+        "No " +
+          (kind === "orders" ? "sales orders" : "quotes") +
+          " match this view.",
+        "Create a record or change the current search filters.",
+      );
+    return `<div class="directory sales-records">${rows.map((row) => `<article class="directory-row record-row"><div><h3>${E(row.title)}</h3><p>${E(N.customerName(row.customerId))} · ${kind === "quotes" ? sourceQuoteLabel(row.status) : "Sales order"}</p><p>${N.money(kind === "quotes" ? total(row.items) : row.total, row.currency)}</p></div>${button("Open " + (kind === "quotes" ? "quote" : "sales order"), kind === "quotes" ? "fin-open-quote" : "fin-open-order", row.id)}</article>`).join("")}</div>`;
+  }
+  N.views.quotes = function () {
+    if (!N.canManage())
+      return N.empty(
+        "Sales records are unavailable",
+        "Choose an owner or manager demo role.",
+      );
+    const heading = sourceHead(
+      "Quotes and sales orders",
+      "Agree the scope and price, preserve the approved terms, then create a sales order.",
     );
-    if (target)
-      target.innerHTML =
-        kind === "invoices" ? invoiceRows(rows) : salesRows(kind, rows);
-  });
+    const quote = find("quotes", N.params.quoteId),
+      order = find("orders", N.params.orderId);
+    if (quote) return heading + sourceQuoteDetail(quote);
+    if (order) return heading + sourceOrderDetail(order);
+    if (N.params.compose === "quote")
+      return (
+        heading + sourceQuoteForm(N.params.editId || "", N.params.dealId || "")
+      );
+    const kind = N.params.tab === "orders" ? "orders" : "quotes",
+      rows = sourceRows(kind);
+    return (
+      heading +
+      salesTabs(kind) +
+      (kind === "quotes"
+        ? `<div class="actions">${button("New quote", "fin-new-quote", N.params.dealId || "", "primary")}</div>`
+        : "") +
+      sourceSearch(kind) +
+      `<p class="list-summary" role="status">${rows.length} ${kind === "orders" ? "sales orders" : "quotes"}</p>` +
+      sourceQuoteRows(kind, rows)
+    );
+  };
+  function sourceQuoteForm(id, dealId) {
+    const quote = find("quotes", id),
+      deal = find("deals", dealId || quote?.dealId);
+    return `<section aria-label="New quote">${button("← All quotes", "fin-back-quotes", "", "back")}<h3>${quote ? "Edit draft quote" : "New quote"}</h3>${deal ? `<div class="notice"><p>Deal: ${E(deal.name)}</p><p>Customer: ${E(N.customerName(deal.customerId))}</p></div>` : ""}<form class="draft-fields" data-form="fin-save-quote"><input type="hidden" name="id" value="${E(id)}"><input type="hidden" name="dealId" value="${E(deal?.id || "")}"><p class="form-error" role="alert"></p>${N.select("Customer for this quote", "customerId", [["", "Choose a customer"]].concat(N.data.customers.filter((c) => c.status !== "ARCHIVED").map((c) => [c.id, c.name])), quote?.customerId || deal?.customerId || "", "required")}<fieldset><legend>Quote terms</legend>${N.field("Quote title", "title", quote?.title || (deal ? deal.name + " quote" : ""), "text", 'required maxlength="160"')}${N.select(
+      "Quote currency",
+      "currency",
+      [
+        ["USD", "USD"],
+        ["GBP", "GBP"],
+        ["PKR", "PKR"],
+        ["EUR", "EUR"],
+      ],
+      quote?.currency || deal?.currency || N.data.company.currency || "USD",
+      "required",
+    )}${N.field("Valid until (optional, UTC date)", "validUntil", quote?.validUntil || "", "date")}${N.textarea("Payment and delivery terms", "terms", quote?.terms || "", 'maxlength="2000"')}<h3>Line items</h3><p class="muted">Whole-unit quantities. Tax is entered explicitly and rounded per line; confirm the applicable rate for your quote.</p><div id="fin-lines">${(quote?.items || [{}]).map(lineEditor).join("")}</div><div class="actions">${button("Add item", "fin-add-line")}</div><p class="hint">Totals are calculated locally when you save. This standalone version has no server.</p><button class="primary" type="submit">${quote ? "Save quote changes" : "Save draft quote"}</button></fieldset></form></section>`;
+  }
+  N.actions["fin-new-quote"] = (el) => {
+    if (guarded(true))
+      N.go("quotes", { compose: "quote", dealId: el.dataset.id });
+  };
+  N.actions["fin-edit-quote"] = (el) => {
+    const quote = find("quotes", el.dataset.id);
+    if (guarded(true) && quote?.status === "DRAFT")
+      N.go("quotes", { compose: "quote", editId: quote.id });
+  };
+  function sourceTotals(items, currency, invoice) {
+    const subtotal =
+        items.reduce(
+          (sum, item) =>
+            sum + Math.round(Math.round(item.price * 100) * item.quantity),
+          0,
+        ) / 100,
+      amount = total(items);
+    return `<dl class="quote-totals"><dt>Subtotal</dt><dd>${N.money(subtotal, currency)}</dd><dt>Tax</dt><dd>${N.money(Math.round((amount - subtotal) * 100) / 100, currency)}</dd><dt>${invoice ? "Invoice total" : "Total"}</dt><dd><strong>${N.money(amount, currency)}</strong></dd>${invoice ? `<dt>Active payments</dt><dd>${N.money(paid(invoice), currency)}</dd><dt>Credited</dt><dd>${N.money(invoice.status === "CREDITED" ? invoice.total : 0, currency)}</dd><dt>Unpaid balance</dt><dd><strong>${N.money(["CREDITED", "VOID"].includes(invoice.status) ? 0 : Math.max(0, invoice.total - paid(invoice)), currency)}</strong></dd>` : ""}</dl>`;
+  }
+  function sourceQuoteDetail(q) {
+    const order = N.data.orders.find((row) => row.quoteId === q.id),
+      customer = find("customers", q.customerId);
+    return `${button("← All quotes", "fin-back-quotes", "", "back")}<h2>${E(q.title)}</h2><section class="panel transcript-panel quote-snapshot"><h3>Saved quote</h3><p>Status: ${sourceQuoteLabel(q.status)} · Saved locally</p><p>Customer: ${E(N.customerName(q.customerId))}</p><p>Email: ${E(customer?.email || "Not provided")}</p><p>Valid until: ${q.validUntil ? N.date(q.validUntil) : "Not set"}</p><p>Terms: ${E(q.terms || "Not added")}</p><ol class="quote-saved-items">${q.items.map((item) => `<li><strong>${E(item.description)}</strong><p>${E(item.quantity)} × ${N.money(item.price, q.currency)} · Tax ${E(item.tax || 0)}%</p><p>Line total: ${N.money(total([item]), q.currency)}</p></li>`).join("")}</ol>${sourceTotals(q.items, q.currency)}${q.acceptanceNote ? `<p>${q.status === "DECLINED" ? "Decline reason" : "Approval reference"}: ${E(q.acceptanceNote)}</p><p>Response recorded: ${N.date(q.acceptedAt)}</p>` : ""}</section>${q.status !== "DRAFT" ? '<p class="notice">Issued terms and line items are read only. Customer approval is recorded internally; no email has been sent.</p>' : ""}${q.status === "DRAFT" ? `<details class="panel transcript-panel" open><summary>Edit draft quote</summary>${sourceQuoteForm(q.id, q.dealId)}</details><section class="panel transcript-panel"><h3>Issue the saved quote</h3><p>Review the saved totals and terms above. Issuing locks that saved version. Save any edits first.</p>${button("Issue saved quote", "fin-issue-quote", q.id, "primary")}</section>` : ""}${q.status === "SENT" ? `<section class="panel transcript-panel"><h3>Record customer decision</h3><p>Record the evidence received from the customer for the saved version above.</p><div class="actions">${button("Record customer acceptance", "fin-accept-quote", q.id, "primary")}${button("Record customer decline", "fin-decline-quote", q.id)}</div></section>` : ""}${["SENT", "DECLINED", "SUPERSEDED"].includes(q.status) ? `<section class="panel transcript-panel"><h3>Revise terms</h3><p>Create a new draft. The previous quote remains visible and can no longer be accepted.</p>${button(q.status === "SUPERSEDED" ? "Open replacement quote" : "Create quote revision", "fin-revise-quote", q.id)}</section>` : ""}${q.status === "ACCEPTED" ? `<section class="panel transcript-panel"><h3>Create a sales order</h3><p>Copy this accepted version and its exact totals into an immutable sales order. Retrying opens the same order.</p>${order ? button("Open sales order", "fin-open-order", order.id, "primary") : button("Create sales order", "fin-convert-order", q.id, "primary")}</section>` : ""}`;
+  }
+  function sourceOrderDetail(order) {
+    const q = find("quotes", order.quoteId);
+    return `${button("← All sales orders", "fin-back-orders", "", "back")}<h2>${E(order.title)}</h2><section class="panel transcript-panel quote-snapshot"><h3>Saved sales order</h3><p>Customer: ${E(N.customerName(order.customerId))}</p><p>Created: ${N.date(order.date)}</p>${q ? button("View approved quote", "fin-open-quote", q.id) : ""}<p>Terms: ${E(q?.terms || "Not added")}</p>${q ? lineTable(q.items, order.currency) : ""}${q ? sourceTotals(q.items, order.currency) : `<p>Total: ${N.money(order.total, order.currency)}</p>`}</section>${N.isOwner() ? button("Prepare invoice", "fin-invoice-order", order.id, "primary") : ""}<p class="notice">This sales order preserves the accepted quote. It is not an invoice or a payment record.</p>`;
+  }
+  N.views.invoices = function () {
+    if (!N.isOwner())
+      return N.empty(
+        "Invoices require owner permission.",
+        "Choose the owner demonstration role.",
+      );
+    const heading = sourceHead(
+      "Client invoices",
+      "Bill agreed work, record payment evidence, and preserve corrections without rewriting issued documents.",
+    );
+    const invoice = find("invoices", N.params.invoiceId);
+    if (invoice) return heading + sourceInvoiceDetail(invoice);
+    if (N.params.compose || N.params.orderId)
+      return heading + sourceInvoiceComposer();
+    const rows = sourceRows("invoices"),
+      state = sourceFilters.invoices;
+    return (
+      heading +
+      `<div class="actions">${button("New invoice", "fin-new-invoice", "", "primary")}</div>${N.savedViews ? N.savedViews("invoices", state) : ""}` +
+      sourceSearch("invoices") +
+      `<p class="list-summary" role="status">${rows.length} invoices</p>${sourceInvoiceRows(rows)}`
+    );
+  };
+  function sourceInvoiceRows(rows) {
+    if (!rows.length)
+      return '<p class="empty">No invoices match this view.</p>';
+    return `<div class="premium-table-wrap table-wrap" tabindex="0" role="region" aria-label="Records table, scroll horizontally for all columns"><table class="premium-table data-table"><caption>Client invoices · ${rows.length} records</caption><thead><tr><th scope="col">Invoice</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Total</th><th scope="col">Balance</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows.map((row) => `<tr><th scope="row">${E(row.number || "Draft invoice")}<span class="premium-cell-detail">${E(row.title || find("orders", row.orderId)?.title || "Approved time")}</span></th><td>${E(N.customerName(row.customerId))}</td><td><span class="record-status">${sourceStatus(row)}</span></td><td>${N.money(row.total, row.currency)}</td><td>${N.money(["CREDITED", "VOID"].includes(row.status) ? 0 : Math.max(0, row.total - paid(row)), row.currency)}</td><td>${button("Open invoice", "fin-open-invoice", row.id)}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+  function sourceInvoiceComposer() {
+    const source = N.params.source || "order",
+      order = find("orders", N.params.orderId);
+    return `<section aria-label="New invoice"><nav class="list-tools tabs" aria-label="Invoice source">${button("Sales order", "fin-source", "order", source === "order" ? "primary" : "secondary")}${button("Approved time", "fin-source", "time", source === "time" ? "primary" : "secondary")}</nav>${button("← All invoices", "fin-back-invoices", "", "back")}${source === "time" ? `<section class="panel transcript-panel"><h3>Invoice approved time</h3><p class="muted">Select approved, billable entries for one customer and project. Preview the exact charge before creating a draft.</p>${button("Choose project and approved entries", "fin-time-compose", "", "primary")}</section>` : `<h3>Invoice accepted work</h3><p>Each sales order has one original invoice. Repeating this action opens its existing invoice.</p>${order ? `<section class="panel transcript-panel"><h3>${E(order.title)}</h3><p>Customer: ${E(N.customerName(order.customerId))}</p><p>Accepted total: ${N.money(order.total, order.currency)}</p><p>Amounts, currency, items and agreed terms are copied unchanged.</p>${button("Create or open invoice", "fin-create-order-invoice", order.id, "primary")}</section>` : `<form data-form="fin-inline-order"><p class="form-error" role="alert"></p>${N.select("Sales order to invoice", "orderId", [["", "Choose a sales order"]].concat(N.data.orders.filter((o) => o.status === "CONFIRMED").map((o) => [o.id, o.title + " · " + N.customerName(o.customerId)])), "", "required")}<button type="submit" class="primary">Review selected order</button></form>`}`}</section>`;
+  }
+  N.actions["fin-new-invoice"] = () => {
+    if (guarded(false)) N.go("invoices", { compose: "invoice" });
+  };
+  N.actions["fin-source"] = (el) =>
+    N.go("invoices", { compose: "invoice", source: el.dataset.id });
+  N.forms["fin-inline-order"] = (form, fd) => {
+    if (guarded(false))
+      N.go("invoices", { compose: "invoice", orderId: fd.get("orderId") });
+  };
+  function sourceBillingForm(invoice) {
+    const billing = invoiceBillingView(invoice);
+    return `<form class="draft-fields" data-form="fin-save-billing"><input type="hidden" name="id" value="${E(invoice.id)}"><p class="form-error" role="alert"></p><fieldset><legend>Billing details</legend>${N.field("Issuer name", "issuerName", billing.issuerName, "text", 'required maxlength="200"')}${N.textarea("Issuer address", "issuerAddress", billing.issuerAddress, 'maxlength="2000"')}${N.textarea("Billing address", "customerAddress", billing.customerAddress, 'maxlength="2000"')}${N.field("Payment due date (optional, UTC)", "dueDate", invoice.dueDate || "", "date")}${N.textarea("Payment instructions", "paymentInstructions", billing.paymentInstructions, 'maxlength="2000"')}<button class="primary" type="submit">Save billing details</button></fieldset></form>`;
+  }
+  N.forms["fin-save-billing"] = (form, fd) => {
+    if (!guarded(false)) return;
+    const invoice = find("invoices", fd.get("id"));
+    if (!invoice || invoice.status !== "DRAFT")
+      return N.formError(form, "Issued billing details are locked.");
+    const issuer = String(fd.get("issuerName") || "").trim(),
+      due = String(fd.get("dueDate") || "");
+    if (!issuer) return N.formError(form, "Issuer name is required.");
+    if (due && !validDate(due))
+      return N.formError(form, "Enter a real payment due date.");
+    invoice.issuerName = issuer.slice(0, 200);
+    invoice.issuerAddress = String(fd.get("issuerAddress") || "").slice(
+      0,
+      2000,
+    );
+    invoice.customerAddress = String(fd.get("customerAddress") || "").slice(
+      0,
+      2000,
+    );
+    invoice.paymentInstructions = String(
+      fd.get("paymentInstructions") || "",
+    ).slice(0, 2000);
+    invoice.dueDate = due;
+    N.save("Billing details saved.");
+  };
+  function sourceInvoiceDetail(invoice) {
+    const billing = invoiceBillingView(invoice);
+    const quote = find("quotes", find("orders", invoice.orderId)?.quoteId),
+      balance = ["CREDITED", "VOID"].includes(invoice.status)
+        ? 0
+        : Math.max(0, invoice.total - paid(invoice));
+    return `${button("← All invoices", "fin-back-invoices", "", "back")}<h2>${E(invoice.number || "Draft invoice")}</h2><header class="invoice-summary premium-record-detail panel"><div><p class="muted">${invoice.type === "TIME" ? "Approved time" : "Sales order"} · ${sourceStatus(invoice)}</p><h3>${E(invoice.title || find("orders", invoice.orderId)?.title || "Approved time")}</h3><p>${E(billing.customerName)}</p><p class="muted">Issued ${invoice.issuedAt ? N.date(invoice.issuedAt) : "not yet"} · Due ${invoice.dueDate ? N.date(invoice.dueDate) : "not specified"}</p></div><dl class="invoice-metrics"><div><dt>Unpaid balance</dt><dd><strong>${N.money(balance, invoice.currency)}</strong></dd></div><div><dt>Invoice total</dt><dd>${N.money(invoice.total, invoice.currency)}</dd></div></dl><div class="invoice-actions">${button("Print / save invoice PDF", "fin-print", invoice.id)}<p class="muted">Uses your browser print dialog. No server PDF service is used.</p></div></header>
+      <details class="invoice-secondary"><summary>Saved billing details and terms</summary><div class="quote-snapshot"><p>Customer: ${E(billing.customerName)} · ${E(billing.customerEmail || "Email not provided")}</p><p>Issuer: ${E(billing.issuerName)}</p><p>Issuer address: ${E(billing.issuerAddress || "Not provided")}</p><p>Billing address: ${E(billing.customerAddress || "Not provided")}</p><p>Terms: ${E(billing.terms || "Not provided")}</p><p>Payment instructions: ${E(billing.paymentInstructions || "Not provided")}</p></div></details>
+      <section class="invoice-line-items panel printable-invoice" id="printable-invoice"><h3>${E(invoice.number)} · ${E(billing.issuerName)}</h3><p>${E(billing.issuerAddress)}</p><p class="muted">${E(billing.customerName)} · Due ${invoice.dueDate ? N.date(invoice.dueDate) : "not specified"}</p><p>${E(billing.customerAddress)}</p>${listTable(
+        ["Description", "Quantity and pricing", "Line total"],
+        invoice.items.map((item) => [
+          E(item.description),
+          `${E(item.quantity)} × ${N.money(item.price, invoice.currency)} · Tax ${E(item.tax || 0)}%`,
+          N.money(total([item]), invoice.currency),
+        ]),
+      )}${sourceTotals(invoice.items, invoice.currency, invoice)}<p>${E(billing.terms)}</p><p>${E(billing.paymentInstructions)}</p><p class="hint">Fictional demonstration invoice. Not a tax-compliant accounting document.</p></section>
+      ${invoice.status === "DRAFT" ? `<details class="panel transcript-panel" open><summary>Billing details</summary>${sourceBillingForm(invoice)}</details><section class="panel transcript-panel"><h3>Issue this invoice</h3><p>Review and save the billing details before issuing. Issuing locks the saved document.</p><div class="actions">${button("Issue invoice", "fin-issue-invoice", invoice.id, "primary")}${button("Void draft", "fin-void-invoice", invoice.id)}</div></section>` : ""}
+      ${invoice.status === "ISSUED" ? `<section class="panel transcript-panel"><h3>Record a received payment</h3><p>Record external evidence only. This action does not charge a customer or move money.</p>${button("Record payment", "fin-payment", invoice.id, "primary")}</section>` : ""}
+      <details class="invoice-secondary" open><summary>Payment evidence and corrections</summary><section class="panel"><h3>Recorded payments</h3>${
+        invoice.payments?.length
+          ? listTable(
+              ["Date", "Receipt or bank reference", "Amount"],
+              invoice.payments.map((row) => [
+                N.date(row.date),
+                E(row.reference),
+                N.money(row.amount, invoice.currency),
+              ]),
+            )
+          : '<p class="muted">No external receipts recorded.</p>'
+      }${["ISSUED", "PAID"].includes(invoice.status) ? button("Record full credit", "fin-credit", invoice.id) : ""}${invoice.creditReason ? `<p class="notice">Full credit: ${E(invoice.creditReason)}. Original receipts remain; no refund was made.</p>` : ""}<p class="hint">Partial credits, payment reversals and replacement drafts are not simulated in this static version.</p></section></details>${invoice.orderId ? button("Open source order", "fin-open-order", invoice.orderId) : ""}`;
+  }
+
+  N.actions["fin-revise-quote"] = (el) => {
+    if (!guarded(true)) return;
+    const quote = find("quotes", el.dataset.id);
+    if (!quote || !["SENT", "DECLINED", "SUPERSEDED"].includes(quote.status))
+      return;
+    let replacement = N.data.quotes.find(
+      (row) => row.supersedesQuoteId === quote.id,
+    );
+    if (!replacement) {
+      replacement = JSON.parse(JSON.stringify(quote));
+      replacement.id = N.id("quote");
+      replacement.status = "DRAFT";
+      replacement.supersedesQuoteId = quote.id;
+      delete replacement.acceptanceNote;
+      delete replacement.acceptedAt;
+      quote.status = "SUPERSEDED";
+      N.data.quotes.push(replacement);
+      if (
+        !N.save("New draft revision created. Previous terms remain preserved.")
+      )
+        return;
+    }
+    N.go("quotes", { quoteId: replacement.id });
+  };
+  function markFinancialDraftDirty(event) {
+    const form = event.target.closest(
+      'form[data-form="fin-save-quote"],form[data-form="fin-save-billing"]',
+    );
+    if (!form) return;
+    const issue = document.querySelector(
+      '[data-action="fin-issue-quote"],[data-action="fin-issue-invoice"]',
+    );
+    if (!issue) return;
+    issue.disabled = true;
+    if (!form.querySelector(".financial-dirty")) {
+      const note = document.createElement("p");
+      note.className = "hint financial-dirty";
+      note.setAttribute("role", "status");
+      note.textContent = "Save your draft changes before issuing.";
+      form.appendChild(note);
+    }
+  }
+  document.addEventListener("input", markFinancialDraftDirty);
+  document.addEventListener("change", markFinancialDraftDirty);
 })();

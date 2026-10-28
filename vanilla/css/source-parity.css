@@ -1,0 +1,1156 @@
+/* Bridges for the ordinary HTML/JS renderer. Visual tokens and screen classes above
+   come directly from the inspected reference revision dfcb293 (see README). */
+:root {
+  --ink: #1d2630;
+  --muted: #53616d;
+  --green: #21594e;
+  --green-dark: #194a40;
+  --line: #dce1e6;
+  --canvas: #f5f5f7;
+  font-size: 14px;
+  background: #f5f5f7;
+  color: #1d2630;
+}
+body {
+  background: #f5f5f7;
+  color: #1d2630;
+}
+.topbar {
+  height: auto;
+  padding: 0;
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.topbar > .header-inner {
+  width: 100%;
+  max-width: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.topbar .brand {
+  font-size: 19px;
+  letter-spacing: -0.5px;
+}
+.topbar .brand strong {
+  font-size: 19px;
+}
+.topbar .brand small {
+  font-size: 10px;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.topbar .brand-symbol {
+  width: 34px;
+  height: 34px;
+  transform: none;
+}
+.topbar .user-label strong {
+  font-size: 13px;
+}
+.topbar .user-label span {
+  font-size: 12px;
+  color: #53616d;
+}
+.topbar-tools {
+  gap: 20px;
+}
+.topbar .account {
+  max-width: none;
+}
+.source-workspace {
+  min-height: calc(100dvh - 64px);
+  padding-top: 18px;
+}
+.source-workspace > .erp-operating-workspace {
+  margin: 0 auto;
+  width: 100%;
+}
+.source-workspace .erp-commandbar {
+  display: flex;
+}
+.source-workspace .erp-context-label {
+  display: flex;
+  flex-direction: column;
+}
+.source-workspace .erp-context-label > span {
+  text-transform: uppercase;
+}
+.source-workspace .erp-context-label > strong {
+  font-size: 19px;
+}
+.source-workspace .erp-company-picker {
+  margin: 0;
+  max-width: 70%;
+}
+.source-workspace .erp-company-picker select {
+  margin: 0;
+  max-width: 360px;
+}
+.source-workspace .erp-company-layout {
+  display: grid;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  gap: 28px;
+  grid-template-columns: 204px minmax(0, 1fr);
+}
+.source-workspace .sidebar {
+  height: auto;
+  position: sticky;
+  top: 84px;
+  align-self: start;
+  display: block;
+  border-right: 0;
+  gap: 0;
+  overflow: visible;
+  min-width: 0;
+}
+.source-workspace .sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.source-workspace .sidebar nav .nav-group {
+  margin: 0;
+  min-width: 0;
+}
+.source-workspace .sidebar nav button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+.source-workspace .sidebar-bottom {
+  border-top: 1px solid #dce1e6;
+  margin-top: 17px;
+  padding: 12px 5px 0;
+}
+.source-workspace .sidebar-bottom button {
+  font-size: 10px;
+  color: #53616d;
+  min-height: 32px;
+}
+.source-workspace .content {
+  padding: 2px 0;
+  margin: 0;
+  align-self: start;
+  max-width: none;
+  min-width: 0;
+}
+.source-global-heading {
+  display: none !important;
+}
+.source-local-notice {
+  font-size: 11px;
+  color: #697782;
+  margin: -7px 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  line-height: 1.5;
+}
+.source-local-notice .text-button {
+  min-height: 24px;
+  font-size: 11px;
+  padding: 0;
+}
+.source-workspace .erp-utility-tray {
+  padding: 10px 0 14px;
+  align-items: flex-start;
+}
+.source-workspace .erp-utility-tray .source-notification {
+  min-height: 44px;
+  border: 1px solid #dce1e6;
+  border-radius: 10px;
+  background: #fff;
+  color: #53616d;
+  font-size: 12px;
+  font-weight: 550;
+  padding: 10px 12px;
+  position: relative;
+}
+.source-notification .notification-count {
+  position: static;
+  display: inline-block;
+  border: 0;
+  margin-left: 4px;
+  min-width: 14px;
+  text-align: center;
+  background: #e6f0ec;
+  color: #21594e;
+  font-size: 10px;
+  line-height: 17px;
+}
+.source-workspace .erp-account-tools-content {
+  padding: 16px;
+  max-width: 760px;
+}
+.source-workspace .erp-account-tools-content .transcript-panel {
+  margin-top: 14px;
+  padding: 13px;
+}
+.source-workspace .erp-account-tools-content .transcript-panel form {
+  margin-top: 16px;
+}
+.source-workspace .erp-account-tools-content p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.source-workspace .section-heading {
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.source-workspace .section-heading > div {
+  min-width: 0;
+}
+.source-workspace .section-heading h2,
+.source-workspace #view > .page-head h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.8px;
+}
+.source-workspace .section-heading h3 {
+  font-size: 20px;
+}
+.source-workspace .page-head {
+  margin-bottom: 20px;
+}
+.source-workspace .page-head .muted,
+.source-workspace .section-head .muted,
+.source-workspace p.muted {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.source-workspace .field {
+  font-size: 13px;
+  margin-bottom: 16px;
+  gap: 7px;
+}
+.source-workspace .field > span {
+  font-size: 13px;
+  font-weight: 550;
+  color: #354550;
+}
+.source-workspace .field input,
+.source-workspace .field select,
+.source-workspace .field textarea {
+  font-size: 14px;
+  min-height: 44px;
+  border-color: #87959f;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0;
+}
+.source-workspace .field textarea {
+  min-height: 100px;
+}
+.source-workspace .form-grid {
+  gap: 0 16px;
+}
+.source-workspace .list-tools {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0;
+  padding: 16px 0;
+  border-top: 1px solid #dce1e6;
+  border-bottom: 1px solid #dce1e6;
+}
+.source-workspace .list-tools .field {
+  min-width: 160px;
+  flex: 1;
+  max-width: none;
+  margin: 0;
+}
+.source-workspace .list-tools .field:first-child {
+  flex: 2;
+}
+.source-workspace .list-tools button {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.source-workspace .toolbar {
+  border: 0;
+  padding: 0;
+}
+.source-workspace .list-summary {
+  font-size: 13px;
+  min-height: 44px;
+}
+.source-workspace .section-head h2 {
+  font-size: 24px;
+}
+.source-workspace .panel,
+.source-workspace .card {
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #dce1e6;
+  padding: 20px;
+  box-shadow: none;
+}
+.source-workspace .panel {
+  margin-bottom: 20px;
+}
+.source-workspace .table-wrap {
+  border-radius: 16px;
+  border-color: #dce1e6;
+}
+.source-workspace .data-table {
+  min-width: 540px;
+  font-size: 13px;
+}
+.source-workspace .data-table th {
+  font-size: 11px;
+  color: #566471;
+  background: #f5f7f9;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.6;
+}
+.source-workspace .data-table td {
+  font-size: 13px;
+  color: #354550;
+  padding: 14px 16px;
+}
+.source-workspace .data-table td button {
+  font-size: 12px;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+.source-workspace .badge {
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: capitalize;
+  padding: 4px 8px;
+  border-radius: 7px;
+}
+.source-workspace .muted,
+.source-workspace .hint,
+.source-workspace .module-footer {
+  color: #53616d;
+  font-size: 12px;
+}
+.source-workspace .empty {
+  padding: 28px 24px;
+  background: #fff;
+  border: 1px dashed #bac6ce;
+}
+.source-workspace .empty-icon {
+  display: none;
+}
+.source-workspace .empty h3 {
+  font-size: 18px;
+  color: #1d2630;
+}
+.source-workspace .empty p {
+  font-size: 13px;
+  color: #53616d;
+}
+.source-workspace .back {
+  color: #21594e;
+  background: none;
+  font-size: 13px;
+  padding: 0;
+  margin: 0 0 14px;
+}
+.source-workspace .directory {
+  display: block;
+  border: 0;
+  background: transparent;
+}
+.source-workspace .directory-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border: 0;
+  border-bottom: 1px solid #dce1e6;
+  border-radius: 0;
+  background: transparent;
+  min-height: 0;
+  font-size: 14px;
+}
+.source-workspace .directory-row:first-child {
+  border-top: 1px solid #dce1e6;
+  border-radius: 16px 16px 0 0;
+}
+.source-workspace .directory-row h3 {
+  font-size: 15px;
+  margin: 0;
+}
+.source-workspace .directory-row p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.source-workspace .premium-record-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  color: #53616d;
+  font-size: 13px;
+  margin: 16px 0 20px;
+}
+.source-workspace .premium-record-summary span:not(.badge) {
+  font-size: 13px;
+}
+.source-workspace .transcript-panel {
+  margin-bottom: 16px;
+}
+.source-workspace .transcript-panel > form,
+.source-workspace .transcript-panel > .form-grid {
+  margin-top: 16px;
+}
+.source-workspace .crm-workspace > h2,
+.source-workspace #view > section > h2 {
+  font-size: 28px;
+  letter-spacing: -0.8px;
+}
+.source-workspace .nw-saved-view-controls select {
+  margin: 0;
+}
+.source-workspace .nw-save-view-form {
+  padding-top: 12px;
+}
+.source-workspace .nw-view-hint {
+  font-size: 11px;
+}
+.source-workspace .company-task-row {
+  background: #fff;
+  border: 1px solid #dce1e6;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.source-workspace .company-task-row .section-heading {
+  margin: 0 0 14px;
+}
+.source-workspace .time-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.source-workspace .time-summary > div {
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #dce1e6;
+  border-radius: 12px;
+}
+.source-workspace .time-summary dt {
+  font-size: 12px;
+  color: #53616d;
+}
+.source-workspace .time-summary dd {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1d2630;
+  margin: 7px 0 0;
+}
+.source-workspace .time-summary > dt,
+.source-workspace .time-summary > dd {
+  padding: 10px;
+  background: #fff;
+  border-bottom: 1px solid #dce1e6;
+  font-size: 14px;
+  margin: 0;
+}
+.source-workspace .time-filter-form .field:first-child {
+  flex: 2;
+}
+.source-workspace .nw-record-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.source-workspace .nw-record-facts dt {
+  font-size: 12px;
+  color: #53616d;
+}
+.source-workspace .nw-record-facts dd {
+  font-size: 14px;
+  font-weight: 550;
+  color: #1d2630;
+}
+.source-workspace .settings-members {
+  border-top: 1px solid #dce1e6;
+  padding-top: 20px;
+  margin-top: 30px;
+}
+.source-workspace .settings-members h2 {
+  font-size: 28px;
+  margin: 20px 0 14px;
+}
+.source-workspace .source-version {
+  font-size: 13px;
+  color: #354550;
+}
+.source-workspace .source-role-tools {
+  margin-top: 20px;
+}
+.source-workspace .settings-form {
+  padding: 20px;
+}
+.source-workspace .settings-form .field {
+  margin-bottom: 16px;
+}
+.source-workspace .settings-form .muted {
+  font-size: 13px;
+}
+.source-workspace .source-subscription-facts {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+  font-size: 14px;
+}
+.source-workspace .source-subscription-facts dt {
+  font-size: 13px;
+}
+.source-workspace .source-subscription-facts dd {
+  font-size: 14px;
+}
+.source-workspace .workspace-footer {
+  font-size: 11px;
+  color: #53616d;
+}
+.source-workspace .chart-table {
+  margin: 15px 0;
+}
+.source-workspace .insight-bars {
+  list-style: none;
+  padding: 0;
+}
+.source-workspace .insight-card .insight-total {
+  margin: 20px 0;
+}
+.source-workspace .overview-heading h2 {
+  font-size: 28px;
+}
+.source-workspace .overview-heading .overview-intro {
+  font-size: 14px;
+  line-height: 1.65;
+}
+.source-workspace .overview-kpi .overview-link,
+.source-workspace .overview-link {
+  padding: 8px 0;
+}
+.source-workspace .overview-kpis {
+  margin: 14px 0;
+}
+.source-workspace .overview-finance-card dd {
+  margin: 0;
+}
+.source-workspace .overview-finance-card dt {
+  margin: 0;
+}
+.source-workspace .overview-section h3 {
+  font-size: 18px;
+}
+.source-workspace .overview-section-heading {
+  align-items: flex-end;
+}
+.source-workspace .insight-ring text {
+  fill: #1d2630;
+}
+.source-workspace .report-controls select {
+  width: 100%;
+  min-width: 200px;
+}
+.source-workspace .report-controls > div {
+  min-width: 200px;
+}
+.source-workspace .report-controls .field {
+  margin: 0;
+}
+.source-workspace .report-page-heading h2 {
+  font-size: 28px;
+}
+.source-workspace .report-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.source-workspace .report-values dd {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1d2630;
+  margin: 7px 0;
+}
+.source-workspace .report-values dt {
+  font-size: 12px;
+}
+.source-workspace .billing-actions {
+  margin-top: 22px;
+}
+.erp-entry .login-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.erp-entry .brand-symbol {
+  width: 34px;
+  height: 34px;
+  font-size: 21px;
+  background: #21594e;
+  border-radius: 11px;
+}
+.erp-entry .brand strong {
+  font-size: 19px;
+}
+.erp-entry .brand small {
+  font-size: 11px;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.erp-entry .erp-entry-main {
+  margin: auto;
+  align-items: center;
+}
+.erp-entry .erp-entry-context .login-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.075em;
+}
+.erp-entry .erp-entry-context h1 {
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: -1.6px;
+}
+.erp-entry .erp-entry-context > p:not(.login-eyebrow) {
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 410px;
+}
+.erp-entry .local-demo-access {
+  max-width: 400px;
+  padding-top: 16px;
+  border-top: 1px solid #dce1e6;
+  margin-top: 24px;
+}
+.erp-entry .local-demo-access h2 {
+  font-size: 15px;
+  letter-spacing: 0;
+}
+.erp-entry .local-demo-access p {
+  font-size: 12px;
+  margin: 5px 0;
+  color: #53616d;
+}
+.erp-entry .local-demo-access .local-demo-company {
+  font-size: 12px;
+  font-weight: 600;
+  display: block;
+  margin: 8px 0;
+}
+.erp-entry .local-demo-access form {
+  margin: 0;
+}
+.erp-entry .local-demo-access .primary {
+  margin-top: 8px;
+}
+.erp-entry .demo-role-choice {
+  margin: 8px 0 0;
+  max-width: 260px;
+}
+.erp-entry .demo-role-choice > span {
+  font-size: 11px;
+}
+.erp-entry .demo-role-choice select {
+  font-size: 12px;
+  min-height: 36px;
+  padding: 6px 10px;
+  margin: 0;
+}
+.erp-entry .source-entry-visual {
+  margin: 24px 0 0;
+  position: relative;
+  max-width: 552px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #dce1e6;
+  box-shadow: 0 18px 36px #1d26300a;
+}
+.source-entry-visual img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+.source-entry-visual figcaption {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: #354550;
+}
+.source-entry-visual figcaption > * {
+  background: #ffffffec;
+  border: 1px solid #dce1e6;
+  border-radius: 20px;
+  padding: 6px 9px;
+  font-weight: 500;
+}
+.erp-entry .erp-login-form h2 {
+  font-size: 26px;
+  letter-spacing: -0.55px;
+}
+.erp-entry .erp-login-form > .muted {
+  font-size: 14px;
+}
+.erp-entry .source-demo-note {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #53616d;
+  margin: 12px 0 0;
+}
+.erp-entry .login-footer {
+  display: block;
+  text-align: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #53616d;
+}
+.erp-entry .erp-signin-shortcut {
+  background: #fff;
+  color: #354550;
+  border: 1px solid #dce1e6;
+  border-radius: 10px;
+  min-height: 44px;
+  font-size: 13px;
+}
+.source-workspace .board {
+  grid-template-columns: repeat(5, minmax(180px, 1fr));
+}
+.source-workspace .board-column {
+  background: #eef1f4;
+  border-color: #dce1e6;
+}
+.source-workspace .deal-card {
+  background: #fff;
+  border-color: #dce1e6;
+}
+.source-workspace .deal-card h3,
+.source-workspace .deal-card h4 {
+  color: #1d2630;
+  font-size: 14px;
+}
+.source-workspace .deal-card p {
+  font-size: 12px;
+  color: #53616d;
+}
+@media (max-width: 1024px) {
+  .source-workspace .erp-company-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .source-workspace .sidebar {
+    position: static;
+    display: block;
+    padding: 8px;
+    height: auto;
+  }
+  .source-workspace .sidebar nav {
+    display: none;
+    gap: 15px;
+  }
+  .source-workspace .sidebar.open nav {
+    display: flex;
+  }
+  .source-workspace .sidebar-bottom {
+    display: none;
+  }
+  .source-workspace .erp-module-menu-trigger {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    border: 0;
+    background: none;
+    color: #354550;
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .source-workspace .erp-module-menu-trigger:after {
+    content: "⌄";
+    margin-left: auto;
+  }
+  .source-workspace .sidebar.open .erp-module-menu-trigger:after {
+    content: "⌃";
+  }
+  .source-workspace .erp-context-label {
+    display: none;
+  }
+  .source-workspace .erp-company-picker {
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+  .source-workspace .content {
+    padding: 0;
+  }
+  .source-workspace .erp-commandbar {
+    justify-content: flex-start;
+  }
+  .source-workspace .source-local-notice {
+    margin-bottom: 17px;
+  }
+}
+@media (min-width: 1025px) {
+  .source-workspace .erp-module-menu-trigger {
+    display: none !important;
+  }
+}
+@media (max-width: 760px) {
+  .source-workspace .erp-company-picker {
+    flex-wrap: wrap;
+  }
+  .source-workspace .erp-company-picker select {
+    min-width: 180px;
+    max-width: 100%;
+    flex: 1;
+  }
+  .source-workspace .erp-company-picker label {
+    font-size: 12px;
+  }
+  .source-workspace .time-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .source-workspace .nw-record-facts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .source-workspace .report-values {
+    grid-template-columns: 1fr 1fr;
+  }
+  .source-workspace .list-tools {
+    gap: 12px;
+  }
+  .source-workspace .list-tools .field {
+    flex: 1 1 190px;
+    min-width: 0;
+  }
+  .source-workspace .source-subscription-facts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .erp-entry .erp-entry-main {
+    grid-template-columns: 1fr;
+  }
+  .erp-entry .erp-entry-context h1 {
+    max-width: 16ch;
+  }
+  .erp-entry .local-demo-access {
+    max-width: none;
+  }
+  .erp-entry .source-entry-visual {
+    max-width: none;
+  }
+  .source-workspace .overview-section-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .source-workspace .nw-record-facts {
+    padding: 16px;
+  }
+  .source-workspace .data-table {
+    min-width: 530px;
+  }
+  .source-workspace .source-local-notice {
+    font-size: 10px;
+  }
+  .source-workspace .directory-row {
+    gap: 13px;
+  }
+  .source-workspace .field input,
+  .source-workspace .field select,
+  .source-workspace .field textarea {
+    font-size: 16px;
+  }
+  .topbar .user-label strong {
+    max-width: 150px;
+  }
+  .topbar .account {
+    padding: 0;
+    width: auto;
+  }
+  .erp-entry .source-entry-visual img {
+    aspect-ratio: 16/9;
+  }
+}
+@media (max-width: 480px) {
+  .source-workspace .erp-utility-tray {
+    gap: 8px;
+  }
+  .source-workspace .erp-company-picker {
+    width: 100%;
+  }
+  .source-workspace .erp-company-picker label {
+    width: 100%;
+  }
+  .source-workspace .erp-company-picker select {
+    min-width: 0;
+    max-width: calc(100% - 72px);
+  }
+  .source-workspace .report-values,
+  .source-workspace .nw-record-facts {
+    grid-template-columns: 1fr;
+  }
+  .source-workspace .list-tools .field {
+    flex-basis: 100%;
+  }
+  .source-workspace .time-summary {
+    gap: 8px;
+  }
+  .source-workspace .time-summary > div {
+    padding: 12px;
+  }
+  .source-workspace .directory-row {
+    flex-wrap: wrap;
+  }
+  .source-workspace .source-subscription-facts {
+    grid-template-columns: 1fr;
+  }
+  .topbar .account .user-label {
+    display: block;
+  }
+  .topbar .user-label strong {
+    font-size: 11px;
+    max-width: 140px;
+  }
+  .topbar .user-label span {
+    font-size: 10px;
+  }
+  .topbar-tools {
+    gap: 12px;
+  }
+  .topbar .account .quiet {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  .topbar .header-inner {
+    flex-wrap: wrap;
+  }
+  .erp-entry .source-entry-visual figcaption {
+    font-size: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+  .source-entry-visual figcaption > * {
+    padding: 4px 6px;
+  }
+  .source-workspace .source-local-notice {
+    line-height: 1.7;
+  }
+  .source-workspace .settings-members h2 {
+    font-size: 24px;
+  }
+  .source-workspace .section-heading h2 {
+    font-size: 25px;
+  }
+}
+@media print {
+  .source-workspace .erp-commandbar,
+  .source-workspace .erp-utility-tray,
+  .source-workspace .source-local-notice,
+  .source-workspace .sidebar {
+    display: none !important;
+  }
+  .source-workspace .erp-company-layout {
+    display: block;
+  }
+  .source-workspace {
+    padding: 0;
+  }
+  .source-workspace .workspace-footer {
+    display: none;
+  }
+}
+.source-workspace .premium-table tbody th {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  background: #fff;
+  color: #1d2630;
+}
+.source-workspace .search-field .field {
+  max-width: none;
+  width: 100%;
+}
+.source-workspace .search-field input {
+  width: 100%;
+}
+.source-workspace .source-local-meeting-note {
+  font-size: 12px;
+  color: #53616d;
+  margin: 15px 0;
+}
+.source-workspace .settings-members > .transcript-panel {
+  margin-bottom: 25px;
+}
+.source-workspace #view > .billing-workspace > .secondary {
+  margin: 16px 0;
+}
+.source-workspace .source-settings > p {
+  font-size: 14px;
+}
+.source-workspace .source-settings > .transcript-panel {
+  margin-top: 0;
+}
+.erp-entry .source-entry-visual.entry-motion {
+  grid-area: scene;
+  margin: 0;
+  align-self: start;
+}
+.erp-entry .local-demo-access > div > p {
+  margin: 4px 0;
+}
+.erp-entry .local-demo-access > div > .login-eyebrow {
+  margin: 0 0 6px;
+}
+.erp-entry .local-demo-access {
+  gap: 0;
+}
+.erp-entry .local-demo-access form .demo-role-choice {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  max-width: none;
+}
+.erp-entry .local-demo-access .demo-role-choice > span {
+  white-space: nowrap;
+}
+.erp-entry .local-demo-access .demo-role-choice select {
+  flex: 1;
+  width: auto;
+}
+.source-workspace .overview-finance-card dd {
+  color: #1d2630;
+  font-size: 14px;
+}
+.source-workspace .overview-finance-card h4 {
+  color: #21594e;
+}
+.source-workspace .insight-total > span {
+  margin-left: 6px;
+}
+.source-workspace .overview-meta {
+  white-space: normal;
+  flex-shrink: 0;
+}
+.source-entry-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.source-entry-visual figcaption {
+  z-index: 2;
+  pointer-events: none;
+}
+.source-motion-control {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  border: 1px solid #dce1e6;
+  background: #ffffffec;
+  border-radius: 8px;
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 10px;
+  color: #354550;
+}
+.erp-entry .source-entry-visual {
+  position: relative;
+}
+.source-unread-count {
+  font-size: 10px;
+  color: #21594e;
+  background: #e6f0ec;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+.source-unread-count:empty {
+  display: none;
+}
+.source-security-section {
+  border-top: 1px solid #dce1e6;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+.source-security-section h3 {
+  margin-bottom: 12px;
+}
+.source-security-section fieldset {
+  margin: 0;
+}
+.source-workspace #source-notifications-content .list {
+  margin: 12px 0;
+}
+.source-workspace #source-notifications-content .list article {
+  padding: 12px;
+}
+.source-workspace .report-controls {
+  padding: 16px;
+}
+.source-workspace .source-settings > h2 {
+  font-size: 20px;
+  letter-spacing: -0.55px;
+}
+.source-workspace .settings-form .field {
+  margin-bottom: 12px;
+}
+.source-workspace .settings-form .field input {
+  font-weight: 400;
+}
+.source-workspace .company-task-row {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.source-workspace .company-task-row > .company-task-content {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+.source-workspace .company-task-row > .field {
+  flex: 0 0 160px;
+  min-width: 160px;
+  margin: 0;
+}
+.source-workspace .company-task-row > details {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-top: 0;
+}
+@media (max-width: 480px) {
+  .source-workspace .company-task-row > .company-task-content {
+    flex-basis: 100%;
+  }
+  .source-workspace .company-task-row > .field {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}
+.source-workspace #view > .source-settings > h2 {
+  font-size: 20px;
+  letter-spacing: -0.55px;
+}

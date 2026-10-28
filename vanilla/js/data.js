@@ -9,23 +9,27 @@
     return {
       version: 1,
       company: {
-        name: "NovaWorks Demo Workspace",
+        name: "NovaWorks Service Studio",
         currency: "USD",
+        legalName: "NovaWorks Service Studio",
+        locale: "en-US",
+        timezone: "UTC",
+        settingsVersion: 0,
         email: "hello@novaworks.example",
         address: "Lahore, Pakistan",
       },
       users: [
         {
           id: "u-owner",
-          name: "Aizaz Noor",
+          name: "NovaWorks Demo Owner",
           role: "OWNER",
-          email: "aizaz@novaworks.example",
+          email: "owner@demo.novaworks.test",
         },
         {
           id: "u-manager",
-          name: "Ayesha Khan",
+          name: "NovaWorks Demo Reviewer",
           role: "MANAGER",
-          email: "ayesha@novaworks.example",
+          email: "reviewer@demo.novaworks.test",
         },
         {
           id: "u-ali",
@@ -354,6 +358,14 @@
         {
           id: "invoice-1",
           number: "INV-1001",
+          issuerName: "NovaWorks Service Studio",
+          issuerAddress: "Lahore, Pakistan",
+          customerName: "UrbanCart",
+          customerEmail: "sana@urbancart.example",
+          customerAddress: "",
+          sourceTerms:
+            "50% on acceptance, balance after delivery. One design revision included.",
+          paymentInstructions: "Record external bank receipt evidence only.",
           customerId: "c-urban",
           orderId: "order-1",
           timeIds: [],

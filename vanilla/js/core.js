@@ -49,18 +49,30 @@
         });
   };
   N.money = function (amount, currency) {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "USD",
-      maximumFractionDigits: 2,
-    }).format(Number(amount) || 0);
+    var value = Number(amount);
+    if (!Number.isFinite(value)) value = 0;
+    return (
+      N.esc(currency || "USD") +
+      " " +
+      value.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
   };
   N.badge = function (status) {
     return (
       '<span class="badge status-' +
       N.esc(String(status || "").toLowerCase()) +
       '">' +
-      N.esc(String(status || "").replace(/_/g, " ")) +
+      N.esc(
+        String(status || "")
+          .toLowerCase()
+          .replace(/_/g, " ")
+          .replace(/^./, function (c) {
+            return c.toUpperCase();
+          }),
+      ) +
       "</span>"
     );
   };
@@ -96,7 +108,9 @@
     return (
       '<label class="field"><span>' +
       N.esc(label) +
-      '</span><select name="' +
+      '</span><select aria-label="' +
+      N.esc(label) +
+      '" name="' +
       N.esc(name) +
       '" ' +
       (extra || "") +
@@ -141,9 +155,9 @@
   };
   N.table = function (headers, rows) {
     return (
-      '<div class="table-wrap" tabindex="0" role="region" aria-label="' +
+      '<div class="table-wrap nw-table-region" tabindex="0" role="region" aria-label="' +
       N.esc(headers.join(", ")) +
-      '"><table class="data-table"><thead><tr>' +
+      '"><table class="data-table nw-record-table"><thead><tr>' +
       headers
         .map(function (h) {
           return '<th scope="col">' + N.esc(h) + "</th>";
@@ -287,7 +301,13 @@
     if (location.hash !== "#" + view)
       history.replaceState(null, "", "#" + view);
     N.render();
-    document.getElementById("page-title").focus();
+    var heading =
+      document.querySelector("#view h1, #view h2") ||
+      document.getElementById("page-title");
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus();
+    }
     document.getElementById("sidebar").classList.remove("open");
     document
       .getElementById("menu-button")

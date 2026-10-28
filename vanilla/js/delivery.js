@@ -4,6 +4,13 @@
   var N = window.Nova;
   var filters = {
     projectSearch: "",
+    projectStatus: "",
+    timeQuery: "",
+    timeFrom: "",
+    timeTo: "",
+    timeSelected: "",
+    timeCreating: false,
+    timeTask: "",
     taskStatus: "",
     timeScope: "mine",
     timeStatus: "",
@@ -116,163 +123,184 @@
     );
   }
 
-  N.views.delivery = function () {
-    var project = N.params.projectId ? projectById(N.params.projectId) : null;
-    if (N.params.projectId && !project)
-      return N.empty(
-        "Project unavailable",
-        "Choose Projects & tasks to return to work in your selected role.",
-      );
-    if (project) return projectDetail(project);
-    var projects = visibleProjects().filter(function (item) {
-      return [item.name, item.description, N.customerName(item.customerId)]
-        .join(" ")
-        .toLowerCase()
-        .includes(filters.projectSearch.toLowerCase());
-    });
-    var tasks = visibleTasks();
+  var projectStatuses = [
+    ["PLANNED", "Planned"],
+    ["ACTIVE", "Active"],
+    ["DONE", "Done"],
+    ["ARCHIVED", "Archived"],
+  ];
+  function projectStatus(value) {
+    return value === "COMPLETED"
+      ? "DONE"
+      : value === "ON_HOLD"
+        ? "PLANNED"
+        : value;
+  }
+  function inlineProjectForm() {
     return (
-      '<div class="section-head"><div><p class="eyebrow">Delivery workspace</p><h2>Projects & tasks</h2><p class="muted">Agreed scope, clear ownership and a measurable next step.</p></div>' +
-      (N.canManage()
-        ? N.button("New project", "del-project-new", "", "primary")
-        : "") +
-      "</div>" +
-      '<form data-form="del-project-filter" class="toolbar">' +
-      N.field(
-        "Find a project",
-        "query",
-        filters.projectSearch,
-        "search",
-        'placeholder="Project, customer or scope"',
-      ) +
-      '<button class="secondary">Search</button></form>' +
-      '<div class="stats"><article class="stat"><span>Accessible projects</span><strong>' +
-      visibleProjects().length +
-      '</strong></article><article class="stat"><span>Open tasks</span><strong>' +
-      tasks.filter(function (task) {
-        return task.status !== "DONE";
-      }).length +
-      '</strong></article><article class="stat"><span>Estimated effort</span><strong>' +
-      tasks.reduce(function (sum, task) {
-        return sum + Number(task.hours || 0);
-      }, 0) +
-      "<small> h</small></strong></article></div>" +
-      (projects.length
-        ? '<div class="card-grid">' +
-          projects
-            .map(function (item) {
-              var ownTasks = visibleTasks(item.id);
-              return (
-                '<article class="card"><div class="section-head"><span class="eyebrow">' +
-                N.esc(N.customerName(item.customerId)) +
-                "</span>" +
-                N.badge(item.status) +
-                "</div><h3>" +
-                N.esc(item.name) +
-                '</h3><p class="muted">' +
-                N.esc(item.description) +
-                "</p>" +
-                progress(ownTasks) +
-                "<dl><dt>Project manager</dt><dd>" +
-                N.esc(N.userName(item.managerId)) +
-                "</dd><dt>Delivery deadline</dt><dd>" +
-                N.date(item.deadline) +
-                "</dd></dl>" +
-                N.button("Open project", "del-project-open", item.id) +
-                "</article>"
-              );
-            })
-            .join("") +
-          "</div>"
-        : N.empty(
-            "No matching projects",
-            "Try another search or ask your manager to assign you work.",
-          ))
-    );
-  };
-
-  function projectDetail(project) {
-    var allTasks = visibleTasks(project.id);
-    var tasks = allTasks.filter(function (task) {
-      return !filters.taskStatus || task.status === filters.taskStatus;
-    });
-    var milestones = N.data.milestones.filter(function (item) {
-      return item.projectId === project.id;
-    });
-    return (
-      N.button("← All projects", "del-project-back", "", "text-button") +
-      '<div class="section-head"><div><p class="eyebrow">' +
-      N.esc(N.customerName(project.customerId)) +
-      "</p><h2>" +
-      N.esc(project.name) +
-      '</h2><p class="muted">' +
-      N.esc(project.description) +
-      '</p></div><div class="actions">' +
-      (canEditProject(project)
-        ? N.button("Edit project", "del-project-edit", project.id) +
-          N.button("Assign task", "del-task-new", project.id, "primary")
-        : "") +
-      "</div></div>" +
-      '<section class="panel"><div class="detail-grid"><div><span class="hint">Manager</span><p>' +
-      N.esc(N.userName(project.managerId)) +
-      '</p></div><div><span class="hint">Deadline</span><p>' +
-      N.date(project.deadline) +
-      '</p></div><div><span class="hint">Project status</span><p>' +
-      N.badge(project.status) +
-      "</p></div></div>" +
-      progress(allTasks) +
-      "</section>" +
-      '<div class="section-head"><h3>Assigned tasks</h3><form data-form="del-task-filter" class="toolbar">' +
+      '<details class="transcript-panel"><summary>Create a project</summary>' +
+      startForm("del-project-save") +
+      N.field("Project name", "name", "", "text", 'required maxlength="160"') +
+      N.textarea("Project description", "description", "", 'maxlength="5000"') +
       N.select(
-        "Task status",
+        "Project manager",
+        "managerId",
+        N.data.users
+          .filter(function (u) {
+            return u.role !== "MEMBER" && (N.isOwner() || u.id === N.user.id);
+          })
+          .map(function (u) {
+            return [u.id, u.name];
+          }),
+        N.user.id,
+      ) +
+      '<input type="hidden" name="status" value="PLANNED">' +
+      finishForm("Create project") +
+      "</details>"
+    );
+  }
+  function savedProjectViews() {
+    var saved = (N.data.projectViews || []).filter(function (v) {
+      return v.userId === N.user.id;
+    });
+    return (
+      '<section class="nw-saved-views" aria-label="Saved views"><div class="nw-saved-view-controls"><label>Saved views<select data-del-change="saved-view"><option value="">Choose a saved view</option>' +
+      saved
+        .map(function (v) {
+          return (
+            '<option value="' +
+            N.esc(v.id) +
+            '"' +
+            (filters.savedProjectView === v.id ? " selected" : "") +
+            ">" +
+            N.esc(v.name) +
+            "</option>"
+          );
+        })
+        .join("") +
+      "</select></label>" +
+      N.button("Save current view", "del-view-new") +
+      (filters.savedProjectView
+        ? N.button("Remove view", "del-view-remove", "", "text-button")
+        : "") +
+      '</div><p class="nw-view-hint">Only named filter preferences are saved in this browser, for your current account and company.</p></section>'
+    );
+  }
+  function taskList(projectId) {
+    var all = visibleTasks(projectId),
+      tasks = all.filter(function (t) {
+        return !filters.taskStatus || t.status === filters.taskStatus;
+      });
+    var managed = visibleProjects().filter(canEditProject);
+    return (
+      '<section aria-label="Company tasks"><div class="section-heading"><h2>Company tasks</h2></div><p class="muted">' +
+      (N.user.role === "MEMBER"
+        ? "Your assigned work in this company."
+        : N.user.role === "MANAGER"
+          ? "Tasks in projects you manage."
+          : "Assignments across this company.") +
+      "</p>" +
+      (managed.length
+        ? '<details class="transcript-panel"><summary>Assign a task</summary>' +
+          startForm("del-task-save") +
+          N.select(
+            "Task project",
+            "projectId",
+            managed.map(function (p) {
+              return [p.id, p.name];
+            }),
+            projectId || managed[0].id,
+            "required",
+          ) +
+          N.field(
+            "Task title",
+            "title",
+            "",
+            "text",
+            'required maxlength="200"',
+          ) +
+          N.textarea(
+            "Task description",
+            "description",
+            "",
+            'required maxlength="5000"',
+          ) +
+          N.select(
+            "Task assignee",
+            "assigneeId",
+            userOptions(),
+            "",
+            "required",
+          ) +
+          N.field("Task deadline", "deadline", "", "date", "required") +
+          N.field(
+            "Estimated hours",
+            "hours",
+            1,
+            "number",
+            'required min="0.01" max="10000" step="0.01"',
+          ) +
+          '<input type="hidden" name="status" value="TODO">' +
+          finishForm("Save assignment") +
+          "</details>"
+        : "") +
+      '<form data-form="del-task-filter" class="list-tools">' +
+      N.select(
+        "Filter task status",
         "status",
         [["", "All statuses"]].concat(taskLabels),
         filters.taskStatus,
+        'data-del-change="task-filter"',
       ) +
-      '<button class="secondary">Apply</button></form></div>' +
+      '</form><p class="list-summary" role="status">' +
+      tasks.length +
+      " tasks available</p>" +
       (tasks.length
-        ? '<div class="list">' +
+        ? '<div class="directory">' +
           tasks
-            .map(function (task) {
-              var comments = Array.isArray(task.comments) ? task.comments : [];
+            .map(function (t) {
+              var comments = Array.isArray(t.comments) ? t.comments : [];
               return (
-                '<article class="panel"><div class="section-head"><div><h3>' +
-                N.esc(task.title) +
-                '</h3><p class="hint">' +
-                N.esc(N.userName(task.assigneeId)) +
-                " · Due " +
-                N.date(task.deadline) +
+                '<article class="directory-row company-task-row"><div class="company-task-content"><p class="muted">' +
+                N.esc(N.projectName(t.projectId)) +
+                "</p><h3>" +
+                N.esc(t.title) +
+                '</h3><p class="muted">' +
+                N.esc(N.userName(t.assigneeId)) +
                 " · " +
-                Number(task.hours) +
-                " estimated hours</p></div>" +
-                N.badge(task.status) +
-                "</div><p>" +
-                N.esc(task.description) +
-                '</p><div class="actions">' +
-                N.button(
-                  canEditProject(project) ? "Edit task" : "Update status",
-                  "del-task-edit",
-                  task.id,
+                N.esc(t.deadline) +
+                " · " +
+                Number(t.hours) +
+                " hours</p></div>" +
+                N.select(
+                  "Task status",
+                  "status",
+                  taskLabels,
+                  t.status,
+                  'data-del-change="task-status" data-id="' + N.esc(t.id) + '"',
                 ) +
-                N.button("Log time", "del-time-for-task", task.id) +
-                "</div><details><summary>Discussion · " +
-                comments.length +
-                '</summary><div class="timeline">' +
+                '<details class="erp-task-details"><summary>Task details &amp; discussion</summary><p class="erp-task-description">' +
+                N.esc(t.description) +
+                '</p><div class="actions">' +
+                (canEditProject(projectById(t.projectId))
+                  ? N.button("Edit task", "del-task-edit", t.id)
+                  : "") +
+                N.button("Log time", "del-time-for-task", t.id) +
+                "</div><h4>Comments</h4>" +
                 comments
-                  .map(function (comment) {
+                  .map(function (c) {
                     return (
                       "<article><strong>" +
-                      N.esc(N.userName(comment.userId)) +
-                      '</strong><span class="hint"> · ' +
-                      N.date(comment.date) +
-                      "</span><p>" +
-                      N.esc(comment.text) +
+                      N.esc(N.userName(c.userId)) +
+                      '</strong><p class="muted">' +
+                      N.esc(c.date) +
+                      "</p><p>" +
+                      N.esc(c.text) +
                       "</p></article>"
                     );
                   })
                   .join("") +
-                "</div>" +
-                startForm("del-comment", task.id) +
+                startForm("del-comment", t.id) +
                 N.textarea(
                   "Add a comment",
                   "comment",
@@ -286,40 +314,321 @@
             .join("") +
           "</div>"
         : N.empty(
-            "No matching tasks",
-            "Change the status filter or assign the next piece of work.",
+            "No tasks match this view.",
+            "Change the status filter or assign work.",
           )) +
-      '<section class="panel"><div class="section-head"><div><h3>Milestones</h3><p class="muted">Dated checkpoints for this project.</p></div>' +
-      (canEditProject(project)
-        ? N.button("Add milestone", "del-milestone-new", project.id)
-        : "") +
-      "</div>" +
-      (milestones.length
-        ? '<div class="list">' +
-          milestones
-            .map(function (item) {
-              return (
-                '<article><div class="section-head"><div><strong>' +
-                N.esc(item.title) +
-                '</strong><p class="hint">Due ' +
-                N.date(item.deadline) +
-                '</p></div><div class="actions">' +
-                N.badge(item.status) +
-                (canEditProject(project) && item.status !== "DONE"
-                  ? N.button("Mark complete", "del-milestone-done", item.id)
-                  : "") +
-                "</div></div></article>"
-              );
-            })
-            .join("") +
-          "</div>"
-        : '<p class="muted">No milestones added yet.</p>') +
       "</section>"
     );
   }
+  N.views.delivery = function () {
+    var project = N.params.projectId ? projectById(N.params.projectId) : null;
+    if (N.params.projectId && !project)
+      return N.empty(
+        "Project unavailable",
+        "This project is not in your selected role view.",
+      );
+    var all = visibleProjects(),
+      matches = all.filter(function (p) {
+        return (
+          (!filters.projectStatus ||
+            projectStatus(p.status) === filters.projectStatus) &&
+          [p.name, p.description, N.userName(p.managerId)]
+            .join(" ")
+            .toLowerCase()
+            .includes(filters.projectSearch.toLowerCase())
+        );
+      });
+    var header =
+      '<div class="section-heading"><div><p class="erp-eyebrow">Delivery</p><h2>Company projects</h2></div><span class="erp-count">' +
+      all.length +
+      " loaded projects</span></div>" +
+      (N.canManage() ? inlineProjectForm() : "");
+    if (project) return header + projectDetail(project) + taskList();
+    return (
+      header +
+      '<section aria-label="Project directory"><form class="list-tools nw-project-filters" data-form="del-project-filter">' +
+      N.field(
+        "Search loaded projects",
+        "query",
+        filters.projectSearch,
+        "search",
+        'maxlength="200" placeholder="Name, scope or manager" data-del-change="project-search"',
+      ) +
+      N.select(
+        "Project status",
+        "status",
+        [["", "All statuses"]].concat(projectStatuses),
+        filters.projectStatus,
+        'data-del-change="project-filter"',
+      ) +
+      (filters.projectSearch || filters.projectStatus
+        ? N.button("Clear filters", "del-project-clear")
+        : "") +
+      "</form>" +
+      savedProjectViews() +
+      '<p class="list-summary" role="status">' +
+      matches.length +
+      " of " +
+      all.length +
+      " loaded projects</p>" +
+      (matches.length
+        ? N.table(
+            ["Project", "Status", "Manager", "Deadline", "Action"],
+            matches.map(function (p) {
+              return [
+                "<strong>" +
+                  N.esc(p.name) +
+                  '</strong><span class="nw-table-secondary">' +
+                  N.esc(
+                    p.customerId
+                      ? N.customerName(p.customerId)
+                      : "Company project",
+                  ) +
+                  "</span>",
+                N.badge(projectStatus(p.status)),
+                N.esc(N.userName(p.managerId)),
+                N.esc(p.deadline || "Not set"),
+                N.button(
+                  "Open project →",
+                  "del-project-open",
+                  p.id,
+                  "text-button",
+                ),
+              ];
+            }),
+          )
+        : N.empty(
+            all.length
+              ? "No projects match these filters"
+              : "No company projects yet",
+            all.length
+              ? "Clear the filters or try another search."
+              : "Create a project to begin planning delivery.",
+          )) +
+      "</section>" +
+      taskList()
+    );
+  };
+  function projectDetail(project) {
+    var manage = canEditProject(project),
+      milestones = N.data.milestones.filter(function (m) {
+        return m.projectId === project.id;
+      });
+    return (
+      '<section class="nw-record-detail" aria-label="Project details">' +
+      N.button("← All projects", "del-project-back", "", "back") +
+      '<header class="nw-record-header"><div><p class="erp-eyebrow">Delivery / Project</p><h2>' +
+      N.esc(project.name) +
+      '</h2><p class="muted">' +
+      N.esc(
+        project.customerId
+          ? N.customerName(project.customerId)
+          : "Company delivery project",
+      ) +
+      "</p></div>" +
+      N.badge(projectStatus(project.status)) +
+      '</header><dl class="nw-record-facts"><div><dt>Project manager</dt><dd>' +
+      N.esc(N.userName(project.managerId)) +
+      "</dd></div><div><dt>Deadline</dt><dd>" +
+      N.esc(project.deadline || "Not set") +
+      "</dd></div><div><dt>Status</dt><dd>" +
+      N.esc(projectStatus(project.status)) +
+      "</dd></div></dl>" +
+      (manage
+        ? '<section class="nw-deadline-editor" aria-label="Project deadline"><h3>Project deadline</h3><p class="muted">Saved deadline: ' +
+          N.esc(project.deadline || "Not set") +
+          "</p><details><summary>Edit deadline</summary>" +
+          startForm("del-deadline-save", project.id) +
+          N.field("Deadline", "deadline", project.deadline, "date") +
+          '<p class="muted">Leave blank for no deadline.</p>' +
+          finishForm("Save deadline") +
+          "</details></section>"
+        : "") +
+      '<section class="nw-detail-section"><h3>Scope of work</h3><p class="nw-preserve-text">' +
+      N.esc(project.description || "No description added yet.") +
+      "</p></section>" +
+      (manage
+        ? N.select(
+            "Update project status",
+            "status",
+            projectStatuses,
+            projectStatus(project.status),
+            'data-del-change="project-status" data-id="' +
+              N.esc(project.id) +
+              '"',
+          )
+        : "") +
+      '<details class="project-milestones"><summary>Milestones for ' +
+      N.esc(project.name) +
+      '</summary><p class="muted">Dated delivery checkpoints. Unsent edits stay on this page only.</p>' +
+      (milestones.length
+        ? '<ol class="milestone-list">' +
+          milestones
+            .map(function (m) {
+              return (
+                "<li><div><strong>" +
+                N.esc(m.title) +
+                '</strong><p class="muted">Due ' +
+                N.esc(m.deadline) +
+                " · " +
+                N.esc(m.status) +
+                "</p></div>" +
+                (manage && m.status !== "DONE"
+                  ? N.button("Mark complete", "del-milestone-done", m.id)
+                  : "") +
+                "</li>"
+              );
+            })
+            .join("") +
+          "</ol>"
+        : '<p class="empty">No milestones yet.</p>') +
+      (manage
+        ? N.button("Add milestone", "del-milestone-new", project.id)
+        : "") +
+      '</details><p class="muted">Company tasks and their project names remain available below.</p></section>'
+    );
+  }
+  N.actions["del-project-clear"] = function () {
+    filters.projectSearch = "";
+    filters.projectStatus = "";
+    N.render();
+  };
+  N.actions["del-view-remove"] = function () {
+    N.data.projectViews = (N.data.projectViews || []).filter(function (v) {
+      return v.id !== filters.savedProjectView || v.userId !== N.user.id;
+    });
+    filters.savedProjectView = "";
+    N.save("Saved view removed. Current filters are unchanged.");
+  };
+  N.actions["del-view-new"] = function () {
+    N.modal(
+      "Save current view",
+      startForm("del-view-save") +
+        N.field("View name", "name", "", "text", 'required maxlength="60"') +
+        finishForm("Save view"),
+    );
+  };
+  N.forms["del-view-save"] = function (form, data) {
+    var name = safeText(data.get("name"));
+    if (!name || name.length > 60)
+      return N.formError(form, "Enter a view name of 1–60 characters.");
+    if (
+      (N.data.projectViews || []).some(function (v) {
+        return (
+          v.userId === N.user.id && v.name.toLowerCase() === name.toLowerCase()
+        );
+      })
+    )
+      return N.formError(form, "A view with this name already exists.");
+    if (!N.data.projectViews) N.data.projectViews = [];
+    if (
+      N.data.projectViews.filter(function (v) {
+        return v.userId === N.user.id;
+      }).length >= 10
+    )
+      return N.formError(
+        form,
+        "You can save up to ten project views per role.",
+      );
+    N.data.projectViews.push({
+      id: N.id("view"),
+      userId: N.user.id,
+      name: name,
+      q: filters.projectSearch,
+      status: filters.projectStatus,
+    });
+    saveAndClose("View saved in this browser.");
+  };
+  N.forms["del-deadline-save"] = function (form, data) {
+    var p = projectById(form.dataset.id),
+      date = data.get("deadline") || "";
+    if (!canEditProject(p) || (date && !validDate(date)))
+      return N.formError(form, "Enter a valid deadline.");
+    if (
+      date &&
+      (N.data.tasks.some(function (t) {
+        return t.projectId === p.id && t.deadline > date;
+      }) ||
+        N.data.milestones.some(function (m) {
+          return m.projectId === p.id && m.deadline > date;
+        }))
+    )
+      return N.formError(
+        form,
+        "The deadline must include existing tasks and milestones.",
+      );
+    p.deadline = date;
+    N.save("Project deadline saved.");
+  };
+  document.addEventListener("input", function (event) {
+    var el = event.target;
+    if (el.dataset.delChange !== "project-search" || !N.user) return;
+    var cursor = el.selectionStart;
+    filters.projectSearch = el.value;
+    N.render();
+    var next = document.querySelector('[data-del-change="project-search"]');
+    if (next) {
+      next.focus();
+      next.setSelectionRange(cursor, cursor);
+    }
+  });
+  document.addEventListener("change", function (event) {
+    var el = event.target,
+      key = el.dataset.delChange;
+    if (!key || !N.user) return;
+    if (key === "project-search") {
+      filters.projectSearch = el.value;
+      N.render();
+    }
+    if (key === "project-filter") {
+      filters.projectStatus = el.value;
+      N.render();
+    }
+    if (key === "task-filter") {
+      filters.taskStatus = el.value;
+      N.render();
+    }
+    if (key === "project-status") {
+      var p = projectById(el.dataset.id);
+      if (
+        canEditProject(p) &&
+        projectStatuses.some(function (pair) {
+          return pair[0] === el.value;
+        })
+      ) {
+        p.status = el.value;
+        N.save("Project status saved.");
+      }
+    }
+    if (key === "task-status") {
+      var t = taskById(el.dataset.id);
+      if (
+        t &&
+        taskLabels.some(function (pair) {
+          return pair[0] === el.value;
+        })
+      ) {
+        t.status = el.value;
+        N.save("Task status saved.");
+      }
+    }
+    if (key === "saved-view") {
+      var v = (N.data.projectViews || []).find(function (item) {
+        return item.id === el.value && item.userId === N.user.id;
+      });
+      if (v) {
+        filters.savedProjectView = v.id;
+        filters.projectSearch = v.q;
+        filters.projectStatus = v.status;
+        N.render();
+        N.notify("Saved filters applied.");
+      }
+    }
+  });
 
   N.forms["del-project-filter"] = function (form, data) {
     filters.projectSearch = safeText(data.get("query"));
+    filters.projectStatus = data.get("status") || "";
     N.render();
   };
   N.forms["del-task-filter"] = function (form, data) {
@@ -422,22 +731,29 @@
       return N.formError(form, "You cannot change this project.");
     var name = safeText(data.get("name")),
       description = safeText(data.get("description")),
-      deadline = data.get("deadline"),
-      customerId = data.get("customerId"),
+      deadline = data.get("deadline") || "",
+      customerId = data.get("customerId") || "",
       managerId = data.get("managerId"),
       status = data.get("status");
     if (
       !name ||
-      !description ||
-      !validDate(deadline) ||
-      !N.data.customers.some(function (customer) {
-        return customer.id === customerId;
-      }) ||
+      (deadline && !validDate(deadline)) ||
+      (customerId &&
+        !N.data.customers.some(function (customer) {
+          return customer.id === customerId;
+        })) ||
       !N.data.users.some(function (user) {
         return user.id === managerId && user.role !== "MEMBER";
       }) ||
       (!N.isOwner() && managerId !== N.user.id) ||
-      !["ACTIVE", "ON_HOLD", "COMPLETED"].includes(status)
+      ![
+        "PLANNED",
+        "ACTIVE",
+        "DONE",
+        "ARCHIVED",
+        "ON_HOLD",
+        "COMPLETED",
+      ].includes(status)
     )
       return N.formError(
         form,
@@ -445,6 +761,7 @@
       );
     if (
       project &&
+      deadline &&
       (N.data.tasks.some(function (task) {
         return task.projectId === project.id && task.deadline > deadline;
       }) ||
@@ -558,13 +875,16 @@
     var title = safeText(data.get("title")),
       description = safeText(data.get("description")),
       deadline = data.get("deadline"),
-      hours = Number(data.get("hours")),
+      hours =
+        data.get("minutes") !== null
+          ? Number(data.get("minutes")) / 60
+          : Number(data.get("hours")),
       assigneeId = data.get("assigneeId");
     if (
       !title ||
       !description ||
       !validDate(deadline) ||
-      deadline > project.deadline ||
+      (project.deadline && deadline > project.deadline) ||
       !Number.isFinite(hours) ||
       hours <= 0 ||
       hours > 10000 ||
@@ -640,7 +960,7 @@
       !canEditProject(project) ||
       !title ||
       !validDate(deadline) ||
-      deadline > project.deadline
+      (project.deadline && deadline > project.deadline)
     )
       return N.formError(
         form,
@@ -677,26 +997,32 @@
       return entry.userId === N.user.id || canReview(entry);
     });
   }
+  function duration(hours) {
+    var minutes = Math.round(Number(hours || 0) * 60);
+    return Math.floor(minutes / 60) + "h " + (minutes % 60) + "m";
+  }
+  function rateSection() {
+    return N.isOwner()
+      ? '<details class="transcript-panel"><summary>Hourly billing rates</summary><p class="muted">Rates for future time billing. Saving a rate does not create an invoice or bill recorded time.</p><p class="hint">This standalone demo uses effective worker rates rather than customer/project-specific rates.</p>' +
+          N.button("Add hourly billing rate", "rate-new") +
+          N.table(
+            ["Worker", "Hourly rate", "Currency", "Effective from"],
+            N.data.rates.map(function (r) {
+              return [
+                N.esc(N.userName(r.userId)),
+                N.money(r.amount, r.currency),
+                N.esc(r.currency),
+                N.esc(r.effectiveFrom),
+              ];
+            }),
+          ) +
+          "</details>"
+      : "";
+  }
   N.views.time = function () {
     var team = filters.timeScope === "team" && N.canManage();
-    var entries = availableTimeEntries()
-      .filter(function (entry) {
-        return (
-          (team ? entry.userId !== N.user.id : entry.userId === N.user.id) &&
-          (!filters.timeStatus || entry.status === filters.timeStatus)
-        );
-      })
-      .slice()
-      .sort(function (a, b) {
-        return b.date.localeCompare(a.date);
-      });
-    var hours = entries.reduce(function (sum, entry) {
-      return sum + Number(entry.hours);
-    }, 0);
-    return (
-      '<div class="section-head"><div><p class="eyebrow">Time & approval</p><h2>Timesheets</h2><p class="muted">Record actual work, submit it, and keep independent approval visible.</p></div>' +
-      N.button("Log time", "del-time-new", "", "primary") +
-      '</div><nav class="tabs" aria-label="Time views">' +
+    var head =
+      '<section class="crm-workspace" aria-label="Timesheets"><div class="section-heading"><h2>Timesheets</h2></div><p class="muted">Record actual work, submit it for review, and keep approved time protected.</p><nav class="list-tools" aria-label="Time views">' +
       N.button("My time", "del-time-mine", "", team ? "secondary" : "primary") +
       (N.canManage()
         ? N.button(
@@ -706,188 +1032,354 @@
             team ? "primary" : "secondary",
           )
         : "") +
-      '</nav><div class="banner">Approved time is locked. You cannot approve your own entries. Approval does not create an invoice.</div><form data-form="del-time-filter" class="toolbar">' +
+      "</nav>";
+    if (filters.timeCreating)
+      return (
+        head +
+        '<section aria-label="Log time">' +
+        N.button("← My time", "del-time-back", "", "back") +
+        "<h3>Log actual work</h3>" +
+        timeFields(null, filters.timeTask ? taskById(filters.timeTask) : null) +
+        "</section>" +
+        rateSection() +
+        "</section>"
+      );
+    var selected = availableTimeEntries().find(function (e) {
+      return e.id === filters.timeSelected;
+    });
+    if (selected)
+      return head + timeDetail(selected) + rateSection() + "</section>";
+    var entries = availableTimeEntries()
+      .filter(function (e) {
+        return (
+          (team ? e.userId !== N.user.id : e.userId === N.user.id) &&
+          (!filters.timeStatus || e.status === filters.timeStatus) &&
+          (!filters.timeFrom || e.date >= filters.timeFrom) &&
+          (!filters.timeTo || e.date <= filters.timeTo) &&
+          [e.note, N.projectName(e.projectId), N.userName(e.userId)]
+            .join(" ")
+            .toLowerCase()
+            .includes(filters.timeQuery.toLowerCase())
+        );
+      })
+      .slice()
+      .sort(function (a, b) {
+        return b.date.localeCompare(a.date);
+      });
+    function sum(predicate) {
+      return entries
+        .filter(function (e) {
+          return e.status !== "VOID" && (!predicate || predicate(e));
+        })
+        .reduce(function (n, e) {
+          return n + Number(e.hours);
+        }, 0);
+    }
+    return (
+      head +
+      (!team ? N.button("Log time", "del-time-new", "", "primary") : "") +
+      '<form data-form="del-time-filter" class="list-tools time-filter-form">' +
+      N.field(
+        "Find time entries",
+        "query",
+        filters.timeQuery,
+        "search",
+        'maxlength="200"',
+      ) +
+      N.field("From date", "from", filters.timeFrom, "date") +
+      N.field("To date", "to", filters.timeTo, "date") +
       N.select(
         "Time status",
         "status",
-        [
-          ["", "All statuses"],
-          ["DRAFT", "Draft"],
-          ["SUBMITTED", "Submitted"],
-          ["APPROVED", "Approved"],
-          ["REJECTED", "Rejected"],
-        ],
+        [["", "All visible statuses"]].concat(
+          (team
+            ? ["SUBMITTED", "APPROVED", "REJECTED"]
+            : ["DRAFT", "SUBMITTED", "APPROVED", "REJECTED", "VOID"]
+          ).map(function (v) {
+            return [v, v];
+          }),
+        ),
         filters.timeStatus,
       ) +
-      '<button class="secondary">Apply filters</button></form>' +
-      '<div class="stats"><article class="stat"><span>Filtered recorded hours</span><strong>' +
-      Number(hours.toFixed(2)) +
-      '</strong></article><article class="stat"><span>Approved hours</span><strong>' +
-      Number(
-        entries
-          .filter(function (entry) {
-            return entry.status === "APPROVED";
-          })
-          .reduce(function (sum, entry) {
-            return sum + Number(entry.hours);
-          }, 0)
-          .toFixed(2),
+      '<button class="secondary">Apply filters</button></form><h3>' +
+      (team ? "Team filtered time" : "My filtered time") +
+      '</h3><dl class="time-summary"><dt>Recorded</dt><dd>' +
+      duration(sum()) +
+      "</dd><dt>Billable</dt><dd>" +
+      duration(
+        sum(function (e) {
+          return e.billable;
+        }),
       ) +
-      '</strong></article><article class="stat"><span>Awaiting review</span><strong>' +
-      entries.filter(function (entry) {
-        return entry.status === "SUBMITTED";
-      }).length +
-      "</strong></article></div>" +
+      "</dd><dt>Approved</dt><dd>" +
+      duration(
+        sum(function (e) {
+          return e.status === "APPROVED";
+        }),
+      ) +
+      "</dd><dt>Approved billable</dt><dd>" +
+      duration(
+        sum(function (e) {
+          return e.status === "APPROVED" && e.billable;
+        }),
+      ) +
+      '</dd></dl><p class="muted">Totals cover all entries matching this view. Discarded time is excluded. Approval does not create an invoice.</p><p class="list-summary" role="status">' +
+      entries.length +
+      " time entries</p>" +
       (entries.length
-        ? N.table(
-            ["Work", "Person / date", "Hours", "Status", "Action"],
-            entries.map(function (entry) {
-              var task = N.data.tasks.find(function (item) {
-                return item.id === entry.taskId;
-              });
-              var action =
-                entry.userId === N.user.id &&
-                ["DRAFT", "REJECTED"].includes(entry.status)
-                  ? N.button("Edit", "del-time-edit", entry.id) +
-                    N.button("Submit", "del-time-submit", entry.id, "primary")
-                  : "";
-              if (entry.status === "SUBMITTED" && canReview(entry))
-                action = N.button(
-                  "Review",
-                  "del-time-review",
-                  entry.id,
-                  "primary",
-                );
-              return [
-                "<strong>" +
-                  N.esc(N.projectName(entry.projectId)) +
-                  '</strong><p class="hint">' +
-                  N.esc(task ? task.title : "Project-level time") +
-                  "</p><p>" +
-                  N.esc(entry.note) +
-                  "</p>" +
-                  (entry.reviewNote
-                    ? '<p class="hint">Review: ' +
-                      N.esc(entry.reviewNote) +
-                      "</p>"
-                    : ""),
-                N.esc(N.userName(entry.userId)) +
-                  '<p class="hint">' +
-                  N.date(entry.date) +
-                  "</p>",
-                Number(entry.hours) +
-                  '<p class="hint">' +
-                  (entry.billable ? "Billable" : "Nonbillable") +
-                  "</p>",
-                N.badge(entry.status) +
-                  (entry.reviewerId
-                    ? '<p class="hint">By ' +
-                      N.esc(N.userName(entry.reviewerId)) +
-                      "</p>"
-                    : ""),
-                '<div class="actions">' + action + "</div>",
-              ];
-            }),
-          )
-        : N.empty(
-            "No time entries in this view",
-            team
-              ? "Team members can submit time for your independent review."
-              : "Log work against an accessible project and submit it for review.",
-          ))
+        ? '<div class="directory">' +
+          entries
+            .map(function (e) {
+              return (
+                '<article class="directory-row"><div><h3>' +
+                N.esc(N.projectName(e.projectId)) +
+                "</h3><p>" +
+                N.esc(e.note) +
+                "</p><p>" +
+                N.esc(N.userName(e.userId)) +
+                " · " +
+                N.esc(e.date) +
+                " · " +
+                duration(e.hours) +
+                "</p><p>" +
+                N.esc(e.status.charAt(0) + e.status.slice(1).toLowerCase()) +
+                " · " +
+                (e.billable ? "Billable" : "Nonbillable") +
+                "</p></div>" +
+                N.button("Open time entry", "del-time-open", e.id) +
+                "</article>"
+              );
+            })
+            .join("") +
+          "</div>"
+        : '<p class="empty">No time entries match this view.</p>') +
+      rateSection() +
+      "</section>"
     );
+  };
+  function timeFields(entry, task) {
+    var projectId = entry
+      ? entry.projectId
+      : task
+        ? task.projectId
+        : (visibleProjects()[0] || {}).id;
+    return (
+      startForm("del-time-save", entry && entry.id) +
+      '<fieldset class="draft-fields"><legend>Time details</legend><fieldset><legend>Work assignment</legend>' +
+      N.select(
+        "Time project",
+        "projectId",
+        [["", "Choose a project"]].concat(projectOptions()),
+        projectId,
+        "required",
+      ) +
+      N.select(
+        "Time task" +
+          (N.user.role === "MEMBER" ? " (required)" : " (optional)"),
+        "taskId",
+        [
+          [
+            "",
+            N.user.role === "MEMBER"
+              ? "Choose your assigned task"
+              : "Project-level time",
+          ],
+        ].concat(
+          visibleTasks().map(function (t) {
+            return [t.id, N.projectName(t.projectId) + " / " + t.title];
+          }),
+        ),
+        entry ? entry.taskId : task ? task.id : "",
+        N.user.role === "MEMBER" ? "required" : "",
+      ) +
+      "</fieldset>" +
+      N.field(
+        "Work date (UTC)",
+        "date",
+        entry ? entry.date : N.today(),
+        "date",
+        'required max="' + N.today() + '"',
+      ) +
+      N.field(
+        "Minutes worked",
+        "minutes",
+        entry ? Math.round(entry.hours * 60) : "",
+        "number",
+        'required min="1" max="1440" step="1"',
+      ) +
+      '<p class="muted">Use whole minutes. Each person can record at most 1440 minutes on one date.</p>' +
+      N.select(
+        "Billable time",
+        "billable",
+        [
+          ["yes", "Billable"],
+          ["no", "Nonbillable"],
+        ],
+        !entry || entry.billable ? "yes" : "no",
+      ) +
+      N.textarea(
+        "Work description",
+        "note",
+        entry && entry.note,
+        'required maxlength="2000" rows="3"',
+      ) +
+      "</fieldset>" +
+      finishForm(entry ? "Save time changes" : "Save time draft")
+    );
+  }
+  function timeDetail(entry) {
+    var mine = entry.userId === N.user.id,
+      editable = mine && ["DRAFT", "REJECTED"].includes(entry.status);
+    return (
+      '<section aria-label="Time entry details">' +
+      N.button("← Time entries", "del-time-back", "", "back") +
+      '<h2>Time entry</h2><dl class="nw-record-facts"><div><dt>Project</dt><dd>' +
+      N.esc(N.projectName(entry.projectId)) +
+      "</dd></div><div><dt>Worker</dt><dd>" +
+      N.esc(N.userName(entry.userId)) +
+      "</dd></div><div><dt>Work date</dt><dd>" +
+      N.esc(entry.date) +
+      "</dd></div><div><dt>Time</dt><dd>" +
+      duration(entry.hours) +
+      "</dd></div><div><dt>Status</dt><dd>" +
+      N.esc(entry.status) +
+      "</dd></div></dl><p>" +
+      N.esc(entry.note) +
+      "</p>" +
+      (editable
+        ? '<details class="transcript-panel" open><summary>Edit my time</summary>' +
+          timeFields(entry, null) +
+          '</details><section class="transcript-panel"><h3>Submit the saved time</h3><p>Submission locks the saved description, duration and billable choice while a different authorized person reviews them.</p>' +
+          N.button(
+            "Submit saved time",
+            "del-time-submit",
+            entry.id,
+            "primary",
+          ) +
+          "<p>Discarding keeps a historical record and removes these minutes from totals.</p>" +
+          N.button("Discard time entry", "del-time-void", entry.id) +
+          "</section>"
+        : "") +
+      (entry.status === "SUBMITTED" && canReview(entry)
+        ? '<section class="transcript-panel"><h3>Review submitted time</h3>' +
+          startForm("del-time-decision", entry.id) +
+          '<input type="hidden" name="decision" value="APPROVED">' +
+          N.textarea(
+            "Review note (required for rejection)",
+            "reason",
+            "",
+            'maxlength="1000" rows="3"',
+          ) +
+          '<div class="list-tools"><button class="primary" type="submit">Approve time</button>' +
+          N.button("Reject time", "del-time-reject", entry.id) +
+          "</div></form>" +
+          "</section>"
+        : "") +
+      '<section class="transcript-panel" aria-label="Time review history"><h3>Review history</h3>' +
+      (entry.reviewHistory && entry.reviewHistory.length
+        ? "<ol>" +
+          entry.reviewHistory
+            .map(function (r) {
+              return (
+                "<li><strong>" +
+                N.esc(r.decision) +
+                " · " +
+                N.esc(N.userName(r.reviewerId)) +
+                "</strong><p>" +
+                N.esc(r.date) +
+                "</p><p>" +
+                N.esc(r.note || "No note added.") +
+                "</p></li>"
+              );
+            })
+            .join("") +
+          "</ol>"
+        : entry.reviewerId
+          ? "<strong>" +
+            N.esc(entry.status) +
+            " · " +
+            N.esc(N.userName(entry.reviewerId)) +
+            "</strong><p>" +
+            N.esc(entry.reviewNote || "No note added.") +
+            "</p>"
+          : "<p>No decisions recorded yet.</p>") +
+      "</section></section>"
+    );
+  }
+  N.actions["del-time-reject"] = function (button) {
+    var form = button.closest("form");
+    if (!form) return;
+    var fd = new FormData(form);
+    fd.set("decision", "REJECTED");
+    N.forms["del-time-decision"](form, fd);
+  };
+  N.actions["del-time-open"] = function (button) {
+    if (
+      availableTimeEntries().some(function (e) {
+        return e.id === button.dataset.id;
+      })
+    ) {
+      filters.timeSelected = button.dataset.id;
+      filters.timeCreating = false;
+      N.render();
+    }
+  };
+  N.actions["del-time-back"] = function () {
+    filters.timeSelected = "";
+    filters.timeCreating = false;
+    N.render();
+  };
+  N.actions["del-time-void"] = function (button) {
+    var e = N.data.times.find(function (item) {
+      return item.id === button.dataset.id;
+    });
+    if (
+      e &&
+      e.userId === N.user.id &&
+      ["DRAFT", "REJECTED"].includes(e.status)
+    ) {
+      e.status = "VOID";
+      N.save("Time discarded. Its minutes are excluded from totals.");
+    } else denied();
   };
   N.actions["del-time-mine"] = function () {
     filters.timeScope = "mine";
     filters.timeStatus = "";
+    filters.timeSelected = "";
+    filters.timeCreating = false;
     N.render();
   };
   N.actions["del-time-team"] = function () {
     if (N.canManage()) {
       filters.timeScope = "team";
-      filters.timeStatus = "";
+      filters.timeStatus = "SUBMITTED";
+      filters.timeSelected = "";
+      filters.timeCreating = false;
       N.render();
     }
   };
   N.forms["del-time-filter"] = function (form, data) {
     filters.timeStatus = data.get("status") || "";
+    filters.timeQuery = safeText(data.get("query"));
+    filters.timeFrom = data.get("from") || "";
+    filters.timeTo = data.get("to") || "";
+    if (filters.timeFrom && filters.timeTo && filters.timeFrom > filters.timeTo)
+      return N.formError(form, "From date must be on or before To date.");
     N.render();
   };
   function timeForm(entry, selectedTask) {
-    var projects = visibleProjects();
     if (
       entry &&
       (entry.userId !== N.user.id ||
         !["DRAFT", "REJECTED"].includes(entry.status))
     )
       return denied();
-    if (!projects.length)
-      return N.notify(
-        "No project is assigned to this role. Ask a manager to assign a task first.",
-        "error",
-      );
-    var projectId = entry
-      ? entry.projectId
-      : selectedTask
-        ? selectedTask.projectId
-        : projects[0].id;
-    N.modal(
-      entry ? "Edit time entry" : "Log actual work",
-      startForm("del-time-save", entry && entry.id) +
-        '<div class="form-grid">' +
-        N.select(
-          "Project",
-          "projectId",
-          projectOptions(),
-          projectId,
-          "required",
-        ) +
-        N.select(
-          "Task (optional for managers)",
-          "taskId",
-          [["", "Project-level time"]].concat(
-            visibleTasks().map(function (task) {
-              return [
-                task.id,
-                N.projectName(task.projectId) + " / " + task.title,
-              ];
-            }),
-          ),
-          entry ? entry.taskId : selectedTask ? selectedTask.id : "",
-        ) +
-        N.field(
-          "Work date",
-          "date",
-          entry ? entry.date : N.today(),
-          "date",
-          'required max="' + N.today() + '"',
-        ) +
-        N.field(
-          "Hours worked",
-          "hours",
-          entry ? entry.hours : 1,
-          "number",
-          'required min="0.01" max="24" step="0.01"',
-        ) +
-        N.select(
-          "Billing",
-          "billable",
-          [
-            ["yes", "Billable"],
-            ["no", "Nonbillable"],
-          ],
-          !entry || entry.billable ? "yes" : "no",
-        ) +
-        "</div>" +
-        N.textarea(
-          "Work description",
-          "note",
-          entry && entry.note,
-          'required maxlength="2000" rows="3"',
-        ) +
-        '<p class="hint">Choose a task belonging to the selected project. Members must select one of their assigned tasks. Maximum 24 hours per person per day.</p>' +
-        finishForm("Save draft"),
-    );
+    if (!visibleProjects().length)
+      return N.notify("Ask your manager to assign a project first.", "error");
+    filters.timeSelected = entry ? entry.id : "";
+    filters.timeCreating = !entry;
+    filters.timeTask = selectedTask ? selectedTask.id : "";
+    N.go("time");
   }
   N.actions["del-time-new"] = function () {
     timeForm(null, null);
@@ -898,8 +1390,8 @@
     else denied();
   };
   N.actions["del-time-edit"] = function (button) {
-    var entry = availableTimeEntries().find(function (item) {
-      return item.id === button.dataset.id;
+    var entry = availableTimeEntries().find(function (e) {
+      return e.id === button.dataset.id;
     });
     if (entry) timeForm(entry, null);
     else denied();
@@ -924,7 +1416,10 @@
       taskId = data.get("taskId") || "",
       task = taskId ? taskById(taskId) : null,
       date = data.get("date"),
-      hours = Number(data.get("hours")),
+      hours =
+        data.get("minutes") !== null
+          ? Number(data.get("minutes")) / 60
+          : Number(data.get("hours")),
       note = safeText(data.get("note"));
     if (
       !project ||
@@ -941,6 +1436,9 @@
       !Number.isFinite(hours) ||
       hours <= 0 ||
       hours > 24 ||
+      (data.get("minutes") !== null &&
+        (!/^\d+$/.test(String(data.get("minutes"))) ||
+          Number(data.get("minutes")) < 1)) ||
       !note ||
       note.length > 2000
     )
@@ -953,6 +1451,7 @@
         return (
           item.userId === N.user.id &&
           item.date === date &&
+          item.status !== "VOID" &&
           (!entry || item.id !== entry.id)
         );
       })
@@ -981,6 +1480,10 @@
     } else N.data.times.push(Object.assign({ id: N.id("time") }, values));
     filters.timeScope = "mine";
     filters.timeStatus = "";
+    filters.timeCreating = false;
+    filters.timeSelected = entry
+      ? entry.id
+      : N.data.times[N.data.times.length - 1].id;
     saveAndClose("Time draft saved. Submit it when ready for review.");
   };
   N.actions["del-time-submit"] = function (button) {
@@ -1046,13 +1549,20 @@
       );
     if (
       !["APPROVED", "REJECTED"].includes(decision) ||
-      !reason ||
+      (decision === "REJECTED" && !reason) ||
       reason.length > 1000
     )
       return N.formError(form, "Choose a decision and enter a review reason.");
     entry.status = decision;
     entry.reviewerId = N.user.id;
     entry.reviewNote = reason;
+    if (!Array.isArray(entry.reviewHistory)) entry.reviewHistory = [];
+    entry.reviewHistory.push({
+      decision: decision,
+      reviewerId: N.user.id,
+      note: reason,
+      date: N.today(),
+    });
     saveAndClose(
       decision === "APPROVED"
         ? "Time approved and locked."
