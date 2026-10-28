@@ -1,0 +1,400 @@
+/* Fictional, linked records for a repeatable classroom demonstration. */
+(function () {
+  function day(offset) {
+    var date = new Date();
+    date.setUTCDate(date.getUTCDate() + offset);
+    return date.toISOString().slice(0, 10);
+  }
+  window.createDemoData = function () {
+    return {
+      version: 1,
+      company: {
+        name: "NovaWorks Demo Workspace",
+        currency: "USD",
+        email: "hello@novaworks.example",
+        address: "Lahore, Pakistan",
+      },
+      users: [
+        {
+          id: "u-owner",
+          name: "Aizaz Noor",
+          role: "OWNER",
+          email: "aizaz@novaworks.example",
+        },
+        {
+          id: "u-manager",
+          name: "Ayesha Khan",
+          role: "MANAGER",
+          email: "ayesha@novaworks.example",
+        },
+        {
+          id: "u-ali",
+          name: "Ali Raza",
+          role: "MEMBER",
+          email: "ali@novaworks.example",
+        },
+        {
+          id: "u-maryam",
+          name: "Maryam Ahmed",
+          role: "MEMBER",
+          email: "maryam@novaworks.example",
+        },
+      ],
+      customers: [
+        {
+          id: "c-urban",
+          name: "UrbanCart",
+          email: "sana@urbancart.example",
+          phone: "+92 300 555 0101",
+          industry: "Retail & e-commerce",
+          status: "ACTIVE",
+        },
+        {
+          id: "c-north",
+          name: "Northstar Studio",
+          email: "omar@northstar.example",
+          phone: "+92 300 555 0102",
+          industry: "Design & architecture",
+          status: "PROSPECT",
+        },
+        {
+          id: "c-help",
+          name: "HelpDeskPro",
+          email: "hina@helpdeskpro.example",
+          phone: "+92 300 555 0103",
+          industry: "Technology",
+          status: "ACTIVE",
+        },
+      ],
+      contacts: [
+        {
+          id: "contact-1",
+          customerId: "c-urban",
+          name: "Sana Malik",
+          email: "sana@urbancart.example",
+          role: "Operations director",
+        },
+        {
+          id: "contact-2",
+          customerId: "c-north",
+          name: "Omar Shah",
+          email: "omar@northstar.example",
+          role: "Founder",
+        },
+      ],
+      activities: [
+        {
+          id: "activity-1",
+          customerId: "c-urban",
+          type: "MEETING",
+          note: "Approved the storefront scope. Weekly delivery reviews on Thursday.",
+          date: day(-5),
+        },
+        {
+          id: "activity-2",
+          customerId: "c-north",
+          type: "CALL",
+          note: "Interested in a client portal. Send a scope and price proposal.",
+          date: day(-1),
+        },
+      ],
+      leads: [
+        {
+          id: "lead-1",
+          name: "Northstar client portal",
+          customerId: "c-north",
+          source: "Referral",
+          status: "QUALIFIED",
+          value: 3200,
+          currency: "USD",
+        },
+        {
+          id: "lead-2",
+          name: "HelpDeskPro onboarding",
+          customerId: "c-help",
+          source: "Website",
+          status: "NEW",
+          value: 2500,
+          currency: "USD",
+        },
+      ],
+      deals: [
+        {
+          id: "deal-1",
+          name: "UrbanCart storefront",
+          customerId: "c-urban",
+          value: 4800,
+          currency: "USD",
+          stage: "WON",
+          probability: 100,
+        },
+        {
+          id: "deal-2",
+          name: "Northstar discovery sprint",
+          customerId: "c-north",
+          value: 1800,
+          currency: "USD",
+          stage: "PROPOSAL",
+          probability: 65,
+        },
+        {
+          id: "deal-3",
+          name: "HelpDeskPro support workspace",
+          customerId: "c-help",
+          value: 2500,
+          currency: "USD",
+          stage: "QUALIFIED",
+          probability: 40,
+        },
+        {
+          id: "deal-4",
+          name: "UrbanCart local maintenance",
+          customerId: "c-urban",
+          value: 120000,
+          currency: "PKR",
+          stage: "NEW",
+          probability: 20,
+        },
+      ],
+      quotes: [
+        {
+          id: "quote-1",
+          title: "UrbanCart storefront proposal",
+          dealId: "deal-1",
+          customerId: "c-urban",
+          currency: "USD",
+          status: "ACCEPTED",
+          validUntil: day(14),
+          terms:
+            "50% on acceptance, balance after delivery. One design revision included.",
+          items: [
+            {
+              description: "Storefront design and implementation",
+              quantity: 1,
+              price: 4800,
+              tax: 0,
+            },
+          ],
+          acceptedAt: day(-5),
+          acceptanceNote: "Sana Malik confirmed by email (fictional sample).",
+        },
+      ],
+      orders: [
+        {
+          id: "order-1",
+          quoteId: "quote-1",
+          customerId: "c-urban",
+          title: "UrbanCart storefront delivery",
+          currency: "USD",
+          total: 4800,
+          status: "CONFIRMED",
+          date: day(-5),
+        },
+      ],
+      projects: [
+        {
+          id: "project-1",
+          name: "UrbanCart storefront",
+          customerId: "c-urban",
+          dealId: "deal-1",
+          managerId: "u-manager",
+          deadline: day(12),
+          status: "ACTIVE",
+          description:
+            "Deliver a responsive storefront, product catalog and demo cart. Real payments and inventory are outside this phase.",
+        },
+        {
+          id: "project-2",
+          name: "HelpDeskPro discovery",
+          customerId: "c-help",
+          managerId: "u-manager",
+          deadline: day(7),
+          status: "ACTIVE",
+          description:
+            "Map the support journey and prepare a validated FAQ content plan.",
+        },
+      ],
+      tasks: [
+        {
+          id: "task-1",
+          projectId: "project-1",
+          title: "Responsive product catalog",
+          assigneeId: "u-ali",
+          deadline: day(3),
+          hours: 12,
+          status: "IN_PROGRESS",
+          description:
+            "Build accessible product listing and detail screens across desktop and mobile.",
+          comments: [
+            {
+              id: "comment-1",
+              userId: "u-manager",
+              text: "Use the approved product images and confirm keyboard navigation.",
+              date: day(-1),
+            },
+          ],
+        },
+        {
+          id: "task-2",
+          projectId: "project-1",
+          title: "Demo cart and checkout",
+          assigneeId: "u-ali",
+          deadline: day(8),
+          hours: 8,
+          status: "TODO",
+          description:
+            "Add quantity updates and clear totals. Do not connect a real payment gateway.",
+          comments: [],
+        },
+        {
+          id: "task-3",
+          projectId: "project-1",
+          title: "Design review",
+          assigneeId: "u-manager",
+          deadline: day(-1),
+          hours: 4,
+          status: "DONE",
+          description: "Review the storefront structure with the customer.",
+          comments: [],
+        },
+        {
+          id: "task-4",
+          projectId: "project-2",
+          title: "FAQ content audit",
+          assigneeId: "u-maryam",
+          deadline: day(2),
+          hours: 6,
+          status: "IN_PROGRESS",
+          description:
+            "Identify missing support questions and document escalation requirements.",
+          comments: [],
+        },
+        {
+          id: "task-5",
+          projectId: "project-2",
+          title: "Support journey mapping",
+          assigneeId: "u-ali",
+          deadline: day(5),
+          hours: 5,
+          status: "TODO",
+          description:
+            "Sketch the customer support flow and review the draft with Ayesha.",
+          comments: [],
+        },
+      ],
+      milestones: [
+        {
+          id: "milestone-1",
+          projectId: "project-1",
+          title: "Customer preview",
+          deadline: day(7),
+          status: "OPEN",
+        },
+      ],
+      times: [
+        {
+          id: "time-1",
+          projectId: "project-1",
+          taskId: "task-1",
+          userId: "u-ali",
+          date: day(-2),
+          hours: 3,
+          note: "Product catalog structure and responsive grid.",
+          status: "APPROVED",
+          reviewerId: "u-manager",
+          billable: true,
+        },
+        {
+          id: "time-2",
+          projectId: "project-2",
+          taskId: "task-4",
+          userId: "u-maryam",
+          date: day(-1),
+          hours: 2,
+          note: "Audited FAQ source content and grouped missing answers.",
+          status: "SUBMITTED",
+          billable: true,
+        },
+        {
+          id: "time-3",
+          projectId: "project-1",
+          taskId: "task-3",
+          userId: "u-manager",
+          date: day(-1),
+          hours: 1.5,
+          note: "Reviewed the customer design feedback.",
+          status: "DRAFT",
+          billable: false,
+        },
+      ],
+      rates: [
+        {
+          id: "rate-1",
+          userId: "u-ali",
+          amount: 45,
+          currency: "USD",
+          effectiveFrom: day(-30),
+        },
+        {
+          id: "rate-2",
+          userId: "u-maryam",
+          amount: 40,
+          currency: "USD",
+          effectiveFrom: day(-30),
+        },
+        {
+          id: "rate-3",
+          userId: "u-manager",
+          amount: 60,
+          currency: "USD",
+          effectiveFrom: day(-30),
+        },
+      ],
+      invoices: [
+        {
+          id: "invoice-1",
+          number: "INV-1001",
+          customerId: "c-urban",
+          orderId: "order-1",
+          timeIds: [],
+          type: "ORDER",
+          status: "ISSUED",
+          currency: "USD",
+          items: [
+            {
+              description: "Storefront design and implementation",
+              quantity: 1,
+              price: 4800,
+              tax: 0,
+            },
+          ],
+          total: 4800,
+          issuedAt: day(-4),
+          dueDate: day(10),
+          payments: [
+            {
+              amount: 2400,
+              date: day(-3),
+              reference: "Fictional bank receipt DEMO-001",
+            },
+          ],
+        },
+      ],
+      notifications: [
+        {
+          id: "notice-1",
+          title: "Maryam submitted 2 hours for review.",
+          date: day(-1),
+          read: false,
+        },
+        {
+          id: "notice-2",
+          title: "UrbanCart quote accepted; sales order confirmed.",
+          date: day(-5),
+          read: false,
+        },
+      ],
+      meetings: [],
+    };
+  };
+})();

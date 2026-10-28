@@ -1,13 +1,13 @@
 {
-  "name": "novaworks-frontend-demo",
+  "name": "novaworks-vanilla-erp",
   "private": true,
   "type": "module",
   "engines": {
     "node": "24.x"
   },
   "scripts": {
-    "dev": "npm run dev --prefix app/client",
-    "build": "npm run build --prefix app/client",
-    "preview": "npm run preview --prefix app/client"
+    "dev": "node vanilla/tools/serve.cjs",
+    "build": "node vanilla/tools/check.cjs",
+    "check": "node vanilla/tools/check.cjs"
   }
 }
